@@ -1,6 +1,6 @@
-<!-- Bila logo sudah siap, hapus tanda komentar dan sesuaikan nama file:
-<p align="center"><img src="public/brand/logo.png" alt="Logo KARTA" width="120" /></p>
--->
+
+<p align="center"><img src="logo/karta.png" alt="Logo KARTA" width="120" /></p>
+
 
 <h1 align="center">KARTA</h1>
 
