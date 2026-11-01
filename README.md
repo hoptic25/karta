@@ -1,6 +1,6 @@
-
+<!--
 <p align="center"><img src="logo/karta.png" alt="Logo KARTA" width="120" /></p>
-
+-->
 
 <h1 align="center">KARTA</h1>
 
