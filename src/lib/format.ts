@@ -19,6 +19,8 @@ export function formatRupiah(amount: number): string {
     .replace(/\s+/g, " ");
 }
 
+export const formatCurrency = formatRupiah;
+
 /**
  * Format date in Asia/Jakarta timezone, e.g. "31 Okt 2026, 14:00 WIB"
  */
@@ -50,6 +52,6 @@ export function maskBankAccount(accountNumber?: string | null): string {
   if (!accountNumber) return "-";
   const clean = accountNumber.trim();
   if (clean.length <= 4) return clean;
-  const lastFour = clean.slice(-4);
-  return `•••• ${lastFour}`;
+  const last4 = clean.slice(-4);
+  return `•••• ${last4}`;
 }

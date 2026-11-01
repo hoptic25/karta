@@ -8,9 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "dotenv -f .env.test -- vitest run",
+    "test": "dotenv run -f .env.test -- vitest run",
     "db:migrate": "prisma migrate dev",
-    "db:test:migrate": "dotenv -f .env.test -- prisma migrate deploy",
+    "db:test:migrate": "dotenv run -f .env.test -- prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
