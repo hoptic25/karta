@@ -13,11 +13,7 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./tests/setup.ts"],
     pool: "forks",
-    poolOptions: {
-      forks: {
-        singleFork: true,
-        execArgv: ["--max-old-space-size=4096"],
-      },
-    },
+    fileParallelism: false,                  
+    execArgv: ["--max-old-space-size=4096"],   
   },
 });
