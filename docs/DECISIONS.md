@@ -119,4 +119,37 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
    - Halaman `/student/my-jobs/[id]` menyediakan ruang kerja terpadu (Workspace) berisi linimasa status, form pengumpulan responsif, histori berkas, serta dialog pengunduran diri.
    - Halaman `/umkm/jobs/[id]` diperkaya dengan panel evaluasi interaktif saat tugas berstatus `SUBMITTED`, memungkinkan UMKM menilai setiap kriteria secara mandiri sebelum mengambil keputusan.
 
+---
+
+### [2026-11-02] Fase 6 — Finansial Mahasiswa, Penarikan Dana, Rating Reputasi, dan Portofolio Publik
+
+1. **Ringkasan Saldo dan Alur Penarikan Dana (PRD §6.8 BR-W1 s.d. BR-W4):**
+   - **BR-W1**: Saldo dihitung secara riil dari entri pembukuan `LedgerEntry` bertipe `STUDENT_SHARE`:
+     - *Tersedia (PAYABLE)*: status `PAYABLE` dan `withdrawalId = null`.
+     - *Tertahan (HELD)*: tugas yang ditolak atau dalam proses sengketa.
+     - *Dalam Proses (RESERVED)*: tugas yang sedang dikerjakan (`IN_PROGRESS`) atau dalam tinjauan (`SUBMITTED`).
+     - *Telah Dicairkan (PAID)*: tugas yang sudah selesai ditransfer admin.
+   - **BR-W2**: Data rekening bank disimpan di profil mahasiswa (`bankName`, `bankAccountName`, `bankAccountNumber`) dengan sanitasi digit angka (5-20 digit) dan masking antarmuka (`•••• 1234`).
+   - **BR-W3**: Penarikan saldo menerapkan aturan batas minimum Rp 50.000, menarik seluruh saldo `PAYABLE` yang tersedia sekaligus, dan membatasi maksimal 1 pengajuan aktif berstatus `REQUESTED` dalam satu waktu. Seluruh entri ledger yang dicairkan ditandai dengan `withdrawalId` di dalam transaksi database atomik.
+   - **BR-W4**: Panel admin (`/admin/withdrawals`) memverifikasi transfer manual. Aksi persetujuan (`PAY`) menandai entri ledger menjadi `PAID` dan mencatat `AuditLog` (`WITHDRAWAL_PAID`). Aksi penolakan (`REJECT`) mewajibkan alasan penolakan, melepaskan tanda `withdrawalId` pada ledger sehingga saldo kembali dapat ditarik mahasiswa, mengirimkan notifikasi in-app, serta mencatat `AuditLog` (`WITHDRAWAL_REJECTED`).
+
+2. **Sistem Rating Timbal Balik & Reputasi (PRD §6.7):**
+   - **UMKM $\to$ Mahasiswa**: Rating bintang 1–5 dan komentar bebas hanya dapat diberikan setelah tugas berstatus `ACCEPTED`.
+     - Rating tinggi ($\ge 4$ bintang) memberikan bonus reputasi +2 poin yang dicatat pada tabel `PointEvent`.
+     - Nilai rata-rata reputasi mahasiswa dihitung secara inkremental dan memperbarui status level secara otomatis (0-49: `NEWCOMER`, 50-149: `RELIABLE`, 150-299: `TRUSTED`, $\ge 300$: `EXPERT`).
+   - **Mahasiswa $\to$ UMKM**: Rating 4 dimensi (Kejelasan Brief, Komunikasi, Profesionalisme, Kecepatan Review) skala 1–5 bintang beserta komentar saran. Nilai rata-rata dari keempat dimensi memperbarui profil `ratingAvg` dan `ratingCount` UMKM.
+   - Ditegakkan aturan integritas unik `@@unique([jobId, direction])` untuk mencegah ulasan duplikat.
+
+3. **Portofolio Publik Mahasiswa (PRD §Modul F-4):**
+   - Halaman `/s/[username]` dapat diakses publik tanpa login.
+   - Menampilkan: identitas mahasiswa, kampus, jurusan, lencana level reputasi, total poin, bintang kepuasan, daftar keterampilan, serta katalog tugas mikro `ACCEPTED` lengkap dengan nama UMKM mitra, lencana relawan (jika unpaid), dan testimoni nyata UMKM.
+   - Menjunjung tinggi privasi: **TIDAK** menampilkan alamat email, nominal uang (IDR), maupun nomor rekening perbankan.
+   - Mengakomodasi preferensi privasi mahasiswa melalui sakelar `portfolioPublic` di halaman `/student/profile`.
+
+4. **Halaman & Antarmuka Terintegrasi:**
+   - `/student/earnings`: Dasbor saldo 4 kartu, kartu rekening pencairan, konfirmasi penarikan, riwayat pencairan, dan riwayat mutasi ledger.
+   - `/student/profile`: Pengaturan bio profil, visibilitas portofolio publik, dan nomor rekening perbankan.
+   - `/admin/withdrawals`: Dasbor admin antrean verifikasi transfer dan histori pencairan dana dengan jejak audit.
+
+
 
