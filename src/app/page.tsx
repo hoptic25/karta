@@ -19,8 +19,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export const revalidate = 3600; // Cache 1 hour for landing page performance
-
 export default async function LandingPage() {
   const [packages, metrics, campuses] = await Promise.all([
     getActivePackages(),
