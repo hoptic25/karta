@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
+import { evaluateJobTimeRules } from "@/features/platform";
 import { getAvailableSubscriptionsForUmkm } from "@/features/subscription";
 import type { JobStatus, Prisma } from "@/generated/prisma/client";
 
@@ -410,6 +411,9 @@ export async function getStudentMyJobs(
 }
 
 export async function getStudentJobWorkspace(jobId: string, studentId: string) {
+  // Evaluasi lazy aturan waktu pekerjaan saat workspace diakses
+  await evaluateJobTimeRules(jobId);
+
   const assignment = await prisma.jobAssignment.findFirst({
     where: {
       jobId,
@@ -431,6 +435,10 @@ export async function getStudentJobWorkspace(jobId: string, studentId: string) {
           },
           criteria: { orderBy: { position: "asc" } },
           images: true,
+          dispute: true,
+          failureReports: {
+            orderBy: { createdAt: "desc" },
+          },
         },
       },
       submissions: {

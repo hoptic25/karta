@@ -27,7 +27,13 @@ import {
   type SelfCheckCriterion,
   type CriteriaEvaluation,
 } from "./execution";
-import type { ReviewDecision } from "@/generated/prisma/client";
+import type { ReviewDecision, DisputeResolution } from "@/generated/prisma/client";
+import { openDispute, resolveDisputeByAdmin } from "./disputes";
+import {
+  reportFailureByUmkm,
+  respondToFailureByStudent,
+  resolveFailureByAdmin,
+} from "./failures";
 
 async function getAuthenticatedUmkm() {
   const user = await requireRole("UMKM");
@@ -268,3 +274,121 @@ export async function reviewSubmissionAction(input: {
     return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
   }
 }
+
+export async function openDisputeAction(input: {
+  jobId: string;
+  reason: string;
+  evidenceUrl?: string;
+}): Promise<Result<{ disputeId: string }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const result = await openDispute(input.jobId, user.id, {
+      reason: input.reason,
+      evidenceUrl: input.evidenceUrl,
+    });
+
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${input.jobId}`);
+    revalidatePath(`/umkm/jobs/${input.jobId}`);
+    revalidatePath("/admin/disputes");
+
+    return success({ disputeId: result.dispute.id });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal mengajukan sengketa.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function resolveDisputeAction(input: {
+  disputeId: string;
+  decision: DisputeResolution;
+  adminNote?: string;
+}): Promise<Result<{ success: boolean; resolution: string }>> {
+  try {
+    const user = await requireRole("ADMIN");
+    const result = await resolveDisputeByAdmin(
+      user.id,
+      input.disputeId,
+      input.decision,
+      input.adminNote
+    );
+
+    revalidatePath("/admin/disputes");
+    revalidatePath("/student/my-jobs");
+    revalidatePath("/umkm/jobs");
+
+    return success({ success: true, resolution: result.resolution });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal memutuskan sengketa.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function reportFailureAction(input: {
+  jobId: string;
+  reason: string;
+}): Promise<Result<{ reportId: string }>> {
+  try {
+    const user = await requireRole("UMKM");
+    const report = await reportFailureByUmkm(input.jobId, user.id, {
+      reason: input.reason,
+    });
+
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${input.jobId}`);
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${input.jobId}`);
+    revalidatePath("/admin/disputes");
+
+    return success({ reportId: report.id });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal melaporkan kendala tugas.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function respondToFailureAction(input: {
+  failureReportId: string;
+  response: string;
+}): Promise<Result<{ success: boolean }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    await respondToFailureByStudent(input.failureReportId, user.id, {
+      response: input.response,
+    });
+
+    revalidatePath("/student/my-jobs");
+    revalidatePath("/admin/disputes");
+
+    return success({ success: true });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal mengirimkan tanggapan.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function resolveFailureAction(input: {
+  failureReportId: string;
+  decision: "CONFIRMED" | "DISMISSED";
+  adminNote?: string;
+}): Promise<Result<{ success: boolean; resolution: string }>> {
+  try {
+    const user = await requireRole("ADMIN");
+    const result = await resolveFailureByAdmin(
+      user.id,
+      input.failureReportId,
+      input.decision,
+      input.adminNote
+    );
+
+    revalidatePath("/admin/disputes");
+    revalidatePath("/umkm/jobs");
+    revalidatePath("/student/my-jobs");
+
+    return success({ success: true, resolution: result.resolution });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal memproses laporan kegagalan.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+

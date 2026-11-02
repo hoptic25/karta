@@ -67,6 +67,8 @@ export function getMinDeadlineHoursSync(role: JobRole, tier: PackageTier): numbe
   return DEFAULT_DEADLINE_RULES[role]?.[effectiveTier] ?? 48;
 }
 
+export const getMinimumDeadlineHours = getMinDeadlineHoursSync;
+
 /**
  * Memvalidasi apakah deadlineAt memenuhi batas minimum waktu pengerjaan (BR-J3).
  * deadlineAt >= baseTime + minHours.

@@ -21,7 +21,10 @@ import type {
   Submission,
   Review,
   LedgerEntry,
+  Dispute,
+  FailureReport,
 } from "@/generated/prisma/client";
+import { StudentDisputeModal } from "./student-dispute-modal";
 import {
   Clock,
   CheckCircle2,
@@ -37,6 +40,7 @@ import {
   Maximize2,
   Sparkles,
   RotateCcw,
+  Scale,
 } from "lucide-react";
 
 export type WorkspaceData = JobAssignment & {
@@ -52,6 +56,8 @@ export type WorkspaceData = JobAssignment & {
     };
     criteria: AcceptanceCriterion[];
     images: ImageAsset[];
+    dispute?: Dispute | null;
+    failureReports?: FailureReport[];
   };
   submissions: (Submission & {
     review: Review | null;
@@ -79,6 +85,9 @@ export function StudentWorkspaceView({ assignment }: StudentWorkspaceViewProps) 
   // Modal Mundur
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawReason, setWithdrawReason] = useState("");
+
+  // Modal Sengketa
+  const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
 
   // Lightbox preview gambar referensi
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -335,7 +344,7 @@ export function StudentWorkspaceView({ assignment }: StudentWorkspaceViewProps) 
         )}
 
         {job.status === "REJECTED" && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-950 space-y-2">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-950 space-y-3">
             <div className="font-bold flex items-center gap-1.5 text-red-800">
               <ShieldAlert className="w-4 h-4" />
               Tugas Ditolak oleh UMKM
@@ -345,10 +354,39 @@ export function StudentWorkspaceView({ assignment }: StudentWorkspaceViewProps) 
                 <strong>Alasan Penolakan:</strong> &ldquo;{latestSubmission.review.reason}&rdquo;
               </div>
             )}
-            <p className="text-[11px] text-red-800">
-              Jika Anda merasa hasil kerja telah memenuhi instruksi, Anda memiliki waktu 3 hari
-              {job.disputeUntil ? ` (s/d ${formatDateTime(job.disputeUntil)})` : ""} untuk mengajukan sengketa ke Admin.
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <p className="text-[11px] text-red-800">
+                Jika Anda merasa hasil kerja telah memenuhi instruksi, Anda memiliki waktu 3 hari
+                {job.disputeUntil ? ` (s/d ${formatDateTime(job.disputeUntil)})` : ""} untuk mengajukan sengketa ke Admin.
+              </p>
+              {!job.dispute && (!job.disputeUntil || new Date() <= new Date(job.disputeUntil)) && (
+                <Button
+                  size="sm"
+                  onClick={() => setIsDisputeModalOpen(true)}
+                  className="bg-red-700 hover:bg-red-800 text-white font-semibold text-xs shrink-0"
+                >
+                  <Scale className="w-3.5 h-3.5 mr-1.5" />
+                  Ajukan Sengketa
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {job.status === "DISPUTED" && (
+          <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-xs text-purple-950 space-y-2">
+            <div className="font-bold flex items-center gap-1.5 text-purple-800">
+              <Scale className="w-4 h-4" />
+              Sengketa Sedang Ditinjau Admin KARTA
+            </div>
+            <p className="text-[11px] text-purple-800">
+              Sanggahan Anda telah tercatat. Tim admin KARTA akan meninjau kesesuaian karya terhadap kriteria penugasan secara objektif.
             </p>
+            {job.dispute?.reason && (
+              <div className="bg-white/80 p-2.5 rounded-lg border border-purple-200 text-purple-900 italic text-[11px]">
+                &quot;{job.dispute.reason}&quot;
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -701,6 +739,13 @@ export function StudentWorkspaceView({ assignment }: StudentWorkspaceViewProps) 
           </div>
         </div>
       )}
+      {/* MODAL SENGKETA */}
+      <StudentDisputeModal
+        jobId={job.id}
+        jobTitle={job.title}
+        open={isDisputeModalOpen}
+        onOpenChange={setIsDisputeModalOpen}
+      />
     </div>
   );
 }

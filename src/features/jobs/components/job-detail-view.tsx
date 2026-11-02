@@ -10,6 +10,7 @@ import {
   reviewSubmissionAction,
 } from "../actions";
 import { PublishModal } from "./publish-modal";
+import { UmkmFailureModal } from "./umkm-failure-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ import {
   ShieldAlert,
   Check,
   X,
+  Scale,
 } from "lucide-react";
 
 type JobDetailData = Job & {
@@ -75,6 +77,7 @@ export function JobDetailView({
 }: JobDetailViewProps) {
   const router = useRouter();
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isFailureModalOpen, setIsFailureModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -345,6 +348,19 @@ export function JobDetailView({
               </>
             )}
 
+            {["IN_PROGRESS", "REVISION_REQUESTED"].includes(job.status) && activeAssignment && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsFailureModalOpen(true)}
+                disabled={isProcessing}
+                className="text-destructive border-destructive/30 hover:bg-destructive/10 gap-1.5"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                Laporkan Kendala
+              </Button>
+            )}
+
             {["ACCEPTED", "CANCELLED", "EXPIRED", "REJECTED"].includes(job.status) && (
               <Button
                 size="sm"
@@ -375,6 +391,18 @@ export function JobDetailView({
             <div>Tipe Pengumpulan: <strong>{job.deliverableType}</strong></div>
           </div>
         </div>
+
+        {job.status === "DISPUTED" && (
+          <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-xs text-purple-950 space-y-2 mt-4">
+            <div className="font-bold flex items-center gap-1.5 text-purple-800">
+              <Scale className="w-4 h-4" />
+              Tugas Dalam Peninjauan Sengketa oleh Admin KARTA
+            </div>
+            <p className="text-[11px] text-purple-800">
+              Mahasiswa mengajukan sanggahan atas penolakan hasil kerja. Tim admin KARTA sedang meninjau kriteria brief dan bukti pengerjaan secara objektif.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* MAHASISWA PENGERJA (JIKA SUDAH DIKLAIM / IN PROGRESS / SUBMITTED) */}
@@ -825,6 +853,14 @@ export function JobDetailView({
           </div>
         </div>
       )}
+      {/* MODAL LAPOR KENDALA */}
+      <UmkmFailureModal
+        jobId={job.id}
+        jobTitle={job.title}
+        studentName={activeAssignment?.student.user.name || "Mahasiswa"}
+        open={isFailureModalOpen}
+        onOpenChange={setIsFailureModalOpen}
+      />
     </div>
   );
 }

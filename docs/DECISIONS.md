@@ -153,3 +153,41 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
 
 
 
+
+---
+
+### [2026-11-02] Fase 7 — Sengketa (Disputes), Pelaporan Kendala (Failures), dan Time Rules (Cron Idempoten)
+
+1. **Sistem Sengketa Tugas (PRD §6.6 BR-D1 s.d. BR-D3):**
+   - **BR-D1 (Pengajuan Sengketa Mahasiswa)**:
+     - Mahasiswa dapat mengajukan sanggahan sengketa (`openDispute`) saat tugas berstatus `REJECTED` selama dalam jendela waktu 3 hari (`now <= disputeUntil`).
+     - Alasan sanggahan wajib minimal 30 karakter, dan tautan bukti diverifikasi menggunakan whitelist domain terpercaya (`isValidDeliverableUrl`).
+     - Status tugas beralih menjadi `DISPUTED` dan notifikasi in-app otomatis dikirim ke UMKM.
+   - **BR-D2 (Keputusan Admin terhadap Sengketa)**:
+     - Dikelola melalui antarmuka admin `/admin/disputes`.
+     - Keputusan `ACCEPT_WORK`: status tugas beralih ke `ACCEPTED`, assignment `COMPLETED`, saldo `STUDENT_SHARE` diubah menjadi `PAYABLE`, poin reputasi normal diberikan (+10 poin base, bonus tanpa revisi, bonus ketepatan waktu), dan dicatat jejak audit `DISPUTE_RESOLVED_ACCEPT`.
+     - Keputusan `UPHOLD_REJECTION`: status tugas dikunci final (`rejectionFinalAt = now`), ledger `VOIDED`, dan dicatat jejak audit `DISPUTE_RESOLVED_REJECT`.
+   - **BR-D3 (Penguncian Final Tanpa Sengketa)**:
+     - Jika melewati batas waktu `disputeUntil` tanpa adanya sengketa, tugas otomatis dikunci final oleh cron (`finalizeRejectionsPastDispute`) dan ledger di-`VOIDED`. Kuota tidak dipulihkan.
+
+2. **Pelaporan Kendala & Kegagalan (PRD §6.6 BR-F1 s.d. BR-F2):**
+   - **BR-F1 (Laporan Kendala UMKM)**:
+     - UMKM dapat mengajukan laporan kendala (`reportFailureByUmkm`) jika tugas berstatus `IN_PROGRESS` atau `REVISION_REQUESTED` dan melewati batas waktu atau tidak ada progres mahasiswa. Alasan laporan minimal 30 karakter.
+     - Mahasiswa diberi hak merespons (`respondToFailureByStudent`) dengan tanggapan minimal 10 karakter.
+   - **BR-F2 (Keputusan Admin Laporan Kendala)**:
+     - Keputusan `CONFIRMED`: assignment dinyatakan `FAILED`, mahasiswa menerima penalti reputasi -15 poin (dievaluasi terhadap penurunan level), entri ledger `VOIDED`, dan tugas di-reset kembali ke status `OPEN` dengan batas waktu `deadlineAt` baru setidaknya `now + minHours` agar dapat diklaim pelamar lain.
+     - Keputusan `DISMISSED`: laporan ditutup dan pengerjaan tugas tetap berlanjut normal.
+
+3. **Time Rules & Cron Runner Idempoten (PRD §13 & §18):**
+   - Diimplementasikan di `src/features/platform/time-rules.ts` mencakup 8 tugas otomasi terjadwal yang sepenuhnya idempoten:
+     1. `expireOpenJobsPastCutoff`: Tugas `OPEN` melewati batas klaim (`deadlineAt - minHours`) beralih ke `EXPIRED`, kuota langganan UMKM dipulihkan (+1) melalui `quotaUsed: { decrement: 1 }` dan dicatat di `quotaLedger`.
+     2. `autoAcceptReviewPastSla`: Tugas `SUBMITTED` melewati SLA review UMKM 3 hari (`reviewDueAt < now`) otomatis diterima sistem (`ACCEPTED`, `autoAccepted = true`), saldo dilepas ke `PAYABLE`, dan poin reputasi dihitung normal.
+     3. `finalizeRejectionsPastDispute`: Tugas `REJECTED` melewati jendela `disputeUntil` tanpa sengketa dikunci final (`rejectionFinalAt = now`) dan ledger di-`VOIDED`.
+     4. `expireEndedSubscriptions`: Langganan UMKM melewati `endsAt` beralih ke `EXPIRED`.
+     5. `sendUpcomingReminders`: Notifikasi pengingat otomatis dikirimkan ke mahasiswa ketika tenggat tugas tinggal 24 jam.
+     6. `autoReleaseUnstartedClaimedJobs` (BR-C6): Tugas `CLAIMED` yang tidak dimulai (`startedAt = null`) dalam 24 jam pertama otomatis dibatalkan (`WITHDRAWN`), ledger di-`VOIDED`, dan tugas dibuka kembali ke `OPEN`.
+     7. `autoDeclineExpiredDeadlineRequests`: Pengajuan perpanjangan tenggat waktu yang tidak direspons UMKM lebih dari 3 hari otomatis ditolak (`DECLINED`).
+     8. `cleanupOrphanJobReferenceImages`: Berkas gambar referensi berumur >24 jam tanpa keterkaitan `jobId` otomatis dibersihkan dari database.
+   - **Evaluasi Lazy (`evaluateJobTimeRules`)**: Dieksekusi otomatis ketika workspace tugas atau detail pekerjaan dibuka oleh pengguna, memastikan status selalu mutakhir tanpa harus menunggu jadwal cron.
+   - **Endpoint Cron API (`/api/cron/tick`)**: Menerima request `GET` dan `POST` dengan pengamanan header `Authorization: Bearer <CRON_SECRET>` yang diverifikasi secara konstan-waktu (`crypto.timingSafeEqual`).
+   - **Cadangan Penjadwalan**: Disediakan `vercel.json` untuk Vercel Cron harian dan `.github/workflows/cron.yml` untuk pemicu tiap jam via GitHub Actions.
