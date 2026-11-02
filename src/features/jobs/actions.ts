@@ -18,6 +18,16 @@ import {
   duplicateJob,
   deleteJobDraft,
 } from "./service";
+import { claimJob } from "./claim";
+import {
+  startWork,
+  withdrawJob,
+  submitWork,
+  reviewSubmission,
+  type SelfCheckCriterion,
+  type CriteriaEvaluation,
+} from "./execution";
+import type { ReviewDecision } from "@/generated/prisma/client";
 
 async function getAuthenticatedUmkm() {
   const user = await requireRole("UMKM");
@@ -141,3 +151,120 @@ export async function deleteJobDraftAction(
   }
 }
 
+
+export async function takeJobAction(
+  jobId: string
+): Promise<Result<{ assignmentId: string; jobId: string }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const { assignment, job } = await claimJob(jobId, user.id);
+
+    revalidatePath("/student/jobs");
+    revalidatePath(`/student/jobs/${jobId}`);
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${jobId}`);
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${jobId}`);
+
+    return success({ assignmentId: assignment.id, jobId: job.id });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal mengambil pekerjaan.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function startWorkAction(
+  jobId: string
+): Promise<Result<{ startedAt: Date }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const result = await startWork(jobId, user.id);
+
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${jobId}`);
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${jobId}`);
+
+    return success({ startedAt: result.startedAt });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal memulai pengerjaan.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function withdrawJobAction(
+  jobId: string,
+  reason?: string
+): Promise<Result<{ nextJobStatus: string }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const result = await withdrawJob(jobId, user.id, reason);
+
+    revalidatePath("/student/jobs");
+    revalidatePath(`/student/jobs/${jobId}`);
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${jobId}`);
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${jobId}`);
+
+    return success({ nextJobStatus: result.nextJobStatus });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal mengundurkan diri.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function submitWorkAction(input: {
+  jobId: string;
+  url: string;
+  note?: string;
+  selfCheck: SelfCheckCriterion[];
+}): Promise<Result<{ submissionNumber: number; reviewDueAt: Date }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const result = await submitWork(input.jobId, user.id, {
+      url: input.url,
+      note: input.note,
+      selfCheck: input.selfCheck,
+    });
+
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${input.jobId}`);
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${input.jobId}`);
+
+    return success({
+      submissionNumber: result.submissionNumber,
+      reviewDueAt: result.reviewDueAt,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal mengumpulkan tugas.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
+export async function reviewSubmissionAction(input: {
+  jobId: string;
+  decision: ReviewDecision;
+  reason?: string;
+  criteriaResults: CriteriaEvaluation[];
+}): Promise<Result<{ decision: ReviewDecision }>> {
+  try {
+    const user = await requireRole("UMKM");
+    const result = await reviewSubmission(input.jobId, user.id, {
+      decision: input.decision,
+      reason: input.reason,
+      criteriaResults: input.criteriaResults,
+    });
+
+    revalidatePath("/umkm/jobs");
+    revalidatePath(`/umkm/jobs/${input.jobId}`);
+    revalidatePath("/student/my-jobs");
+    revalidatePath(`/student/my-jobs/${input.jobId}`);
+
+    return success({ decision: result.decision as ReviewDecision });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal memproses penilaian tugas.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}

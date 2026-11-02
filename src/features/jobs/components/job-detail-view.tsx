@@ -7,9 +7,12 @@ import {
   cancelJobAction,
   duplicateJobAction,
   deleteJobDraftAction,
+  reviewSubmissionAction,
 } from "../actions";
 import { PublishModal } from "./publish-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { formatRupiah, formatDateTime, formatDateOnly } from "@/lib/format";
 import type {
   Job,
@@ -36,6 +39,11 @@ import {
   Clock,
   AlertCircle,
   ExternalLink,
+  CheckCircle2,
+  RotateCcw,
+  ShieldAlert,
+  Check,
+  X,
 } from "lucide-react";
 
 type JobDetailData = Job & {
@@ -70,7 +78,82 @@ export function JobDetailView({
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Review Evaluation State (BR-E3 & BR-E4)
+  const [criteriaEvaluation, setCriteriaEvaluation] = useState<
+    Record<string, { met: boolean; comment: string }>
+  >(() => {
+    const init: Record<string, { met: boolean; comment: string }> = {};
+    job.criteria.forEach((c) => {
+      init[c.id] = { met: true, comment: "" };
+    });
+    return init;
+  });
+  const [reviewModalMode, setReviewModalMode] = useState<"NONE" | "REVISION" | "REJECT">("NONE");
+  const [reviewReasonInput, setReviewReasonInput] = useState("");
+
   const activeAssignment = job.assignments.find((a) => a.status === "ACTIVE");
+
+  const handleAcceptWork = async () => {
+    if (!window.confirm("Apakah Anda yakin ingin menerima hasil kerja ini? Kompensasi mahasiswa akan dialokasikan dan status tugas diselesaikan.")) return;
+
+    setIsProcessing(true);
+    setActionError(null);
+
+    const criteriaResults = job.criteria.map((c) => ({
+      criterionId: c.id,
+      met: criteriaEvaluation[c.id]?.met ?? true,
+      comment: criteriaEvaluation[c.id]?.comment || undefined,
+    }));
+
+    const res = await reviewSubmissionAction({
+      jobId: job.id,
+      decision: "ACCEPT",
+      criteriaResults,
+    });
+
+    setIsProcessing(false);
+    if (!res.ok) {
+      setActionError(res.error.message);
+      return;
+    }
+
+    router.refresh();
+  };
+
+  const handleConfirmDecision = async () => {
+    if (reviewModalMode === "NONE") return;
+
+    if (reviewModalMode === "REJECT" && reviewReasonInput.trim().length < 20) {
+      setActionError("Alasan penolakan wajib diisi minimal 20 karakter.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setActionError(null);
+
+    const criteriaResults = job.criteria.map((c) => ({
+      criterionId: c.id,
+      met: criteriaEvaluation[c.id]?.met ?? true,
+      comment: criteriaEvaluation[c.id]?.comment || undefined,
+    }));
+
+    const res = await reviewSubmissionAction({
+      jobId: job.id,
+      decision: reviewModalMode === "REVISION" ? "REQUEST_REVISION" : "REJECT",
+      reason: reviewReasonInput,
+      criteriaResults,
+    });
+
+    setIsProcessing(false);
+    if (!res.ok) {
+      setActionError(res.error.message);
+      return;
+    }
+
+    setReviewModalMode("NONE");
+    setReviewReasonInput("");
+    router.refresh();
+  };
 
   const handleCancelJob = async () => {
     const confirmText =
@@ -332,6 +415,194 @@ export function JobDetailView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* KOLOM KIRI: DESKRIPSI & INSTRUKSI */}
         <div className="lg:col-span-2 space-y-6">
+          {/* PANEL REVIEW EVALUASI UMKM (BR-E3 & BR-E4) */}
+          {job.status === "SUBMITTED" && activeAssignment && activeAssignment.submissions.length > 0 && (
+            <div className="rounded-2xl border-2 border-earth-primary/40 bg-earth-cream/20 p-6 shadow-sm space-y-5">
+              <div className="border-b border-earth-sand/30 pb-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading text-lg font-bold text-primary-brown flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-earth-primary" />
+                    Penilaian & Review Hasil Kerja Mahasiswa
+                  </h3>
+                  {job.reviewDueAt && (
+                    <span className="text-xs text-earth-coffee font-semibold bg-earth-sand/30 px-2.5 py-1 rounded-md">
+                      Batas SLA: {formatDateTime(job.reviewDueAt)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-primary-brown/70 font-sans mt-1">
+                  Evaluasi kriteria penerimaan di bawah dan tentukan apakah tugas diterima, diminta revisi, atau ditolak.
+                </p>
+              </div>
+
+              {/* TAUTAN BERKAS PENGUMPULAN TERBARU */}
+              {(() => {
+                const latestSub = activeAssignment.submissions[activeAssignment.submissions.length - 1];
+                return (
+                  <div className="rounded-xl border border-beige bg-white p-4 space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-primary-brown">
+                        Pengumpulan #{latestSub.number}
+                        {latestSub.isLate && (
+                          <span className="ml-2 text-[10px] text-red-600 font-semibold bg-red-100 px-1.5 py-0.5 rounded">
+                            Terlambat
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-primary-brown/60">
+                        Dikumpulkan pada: {formatDateTime(latestSub.submittedAt)}
+                      </span>
+                    </div>
+
+                    <div className="pt-1">
+                      <a
+                        href={latestSub.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg bg-earth-cream px-3 py-2 text-xs font-bold text-earth-primary hover:bg-earth-sand/30 transition-colors border border-earth-sand/40"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Buka & Periksa Berkas Hasil Kerja: {latestSub.url}
+                      </a>
+                    </div>
+
+                    {latestSub.note && (
+                      <p className="text-xs text-primary-brown/80 italic bg-cream/40 p-2.5 rounded border border-beige/60">
+                        Catatan Mahasiswa: &ldquo;{latestSub.note}&rdquo;
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* CHECKLIST EVALUASI KRITERIA PENERIMAAN */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-primary-brown uppercase tracking-wider">
+                  Evaluasi Kriteria Penerimaan ({job.criteria.length})
+                </h4>
+
+                <div className="space-y-2.5">
+                  {job.criteria.map((c) => {
+                    const currentMet = criteriaEvaluation[c.id]?.met ?? true;
+                    return (
+                      <div
+                        key={c.id}
+                        className="rounded-xl border border-beige bg-white p-3 space-y-2 text-xs"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="text-primary-brown font-medium leading-snug">
+                            {c.text}
+                          </span>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCriteriaEvaluation((prev) => ({
+                                  ...prev,
+                                  [c.id]: { ...prev[c.id], met: true },
+                                }))
+                              }
+                              className={`rounded-md px-2 py-1 text-[11px] font-bold transition-all flex items-center gap-1 ${
+                                currentMet
+                                  ? "bg-emerald-600 text-white shadow-xs"
+                                  : "bg-cream text-primary-brown/60 hover:bg-emerald-50"
+                              }`}
+                            >
+                              <Check className="w-3 h-3" />
+                              Memenuhi
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCriteriaEvaluation((prev) => ({
+                                  ...prev,
+                                  [c.id]: { ...prev[c.id], met: false },
+                                }))
+                              }
+                              className={`rounded-md px-2 py-1 text-[11px] font-bold transition-all flex items-center gap-1 ${
+                                !currentMet
+                                  ? "bg-amber-600 text-white shadow-xs"
+                                  : "bg-cream text-primary-brown/60 hover:bg-amber-50"
+                              }`}
+                            >
+                              <X className="w-3 h-3" />
+                              Belum Sesuai
+                            </button>
+                          </div>
+                        </div>
+
+                        {!currentMet && (
+                          <Input
+                            placeholder="Catatan perbaikan untuk kriteria ini (opsional)..."
+                            value={criteriaEvaluation[c.id]?.comment || ""}
+                            onChange={(e) =>
+                              setCriteriaEvaluation((prev) => ({
+                                ...prev,
+                                [c.id]: { ...prev[c.id], comment: e.target.value },
+                              }))
+                            }
+                            className="text-xs h-8 font-sans"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TOMBOL AKSI KEPUTUSAN REVIEW */}
+              <div className="pt-3 border-t border-earth-sand/30 flex flex-wrap items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setReviewModalMode("REJECT");
+                    setReviewReasonInput("");
+                  }}
+                  disabled={isProcessing}
+                  className="text-destructive border-red-200 hover:bg-red-50 text-xs gap-1.5"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  Tolak Hasil Kerja
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={job.revisionCount >= 2 || isProcessing}
+                    onClick={() => {
+                      setReviewModalMode("REVISION");
+                      setReviewReasonInput("");
+                    }}
+                    className="text-amber-800 border-amber-300 hover:bg-amber-50 text-xs gap-1.5 font-semibold"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>
+                      {job.revisionCount >= 2
+                        ? "Batas Revisi Habis (2/2)"
+                        : `Minta Revisi (${job.revisionCount + 1}/2)`}
+                    </span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAcceptWork}
+                    disabled={isProcessing}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{isProcessing ? "Menyimpan..." : "Terima Hasil Kerja (Accept)"}</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="rounded-2xl border border-beige bg-white p-6 shadow-sm space-y-5">
             <div>
               <h3 className="font-heading text-lg font-bold text-primary-brown border-b border-beige pb-2 mb-3">
@@ -465,6 +736,95 @@ export function JobDetailView({
         onClose={() => setIsPublishModalOpen(false)}
         availableSubscriptions={availableSubscriptions}
       />
+
+      {/* MODAL KEPUTUSAN REVIEW (REVISI ATAU TOLAK) */}
+      {reviewModalMode !== "NONE" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl border border-beige bg-white p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-beige pb-3">
+              <h3 className="font-heading text-base font-bold text-primary-brown flex items-center gap-2">
+                {reviewModalMode === "REVISION" ? (
+                  <>
+                    <RotateCcw className="w-4 h-4 text-amber-600" />
+                    Minta Revisi kepada Mahasiswa
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="w-4 h-4 text-red-600" />
+                    Tolak Hasil Kerja Mahasiswa
+                  </>
+                )}
+              </h3>
+              <button
+                onClick={() => setReviewModalMode("NONE")}
+                className="text-primary-brown/60 hover:text-primary-brown"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-xs text-primary-brown/80 space-y-3 font-sans">
+              <p>
+                {reviewModalMode === "REVISION"
+                  ? `Berikan instruksi revisi yang jelas agar mahasiswa dapat memperbaiki hasil kerja (Revisi #${job.revisionCount + 1} dari 2). Mahasiswa diberikan SLA 3 hari untuk submit ulang.`
+                  : "Penolakan hasil kerja wajib disertai alasan objektif minimal 20 karakter. Mahasiswa memiliki hak mengajukan sengketa dalam waktu 3 hari."}
+              </p>
+
+              <div className="space-y-1">
+                <label className="font-bold text-primary-brown text-[11px]">
+                  {reviewModalMode === "REVISION" ? "Catatan Revisi *" : "Alasan Penolakan (min. 20 karakter) *"}
+                </label>
+                <Textarea
+                  rows={4}
+                  value={reviewReasonInput}
+                  onChange={(e) => setReviewReasonInput(e.target.value)}
+                  placeholder={
+                    reviewModalMode === "REVISION"
+                      ? "Contoh: Mohon perbaiki penulisan kolom harga pada baris 10-25 sesuai template..."
+                      : "Contoh: Hasil pengerjaan tidak memenuhi kriteria penerimaan wajib nomor 1 dan 2..."
+                  }
+                  className="text-xs font-sans"
+                />
+                {reviewModalMode === "REJECT" && (
+                  <span className="text-[10px] text-primary-brown/60">
+                    {reviewReasonInput.trim().length}/20 karakter minimum
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-beige">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReviewModalMode("NONE")}
+                className="text-xs"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant={reviewModalMode === "REJECT" ? "destructive" : "default"}
+                size="sm"
+                onClick={handleConfirmDecision}
+                disabled={
+                  isProcessing ||
+                  (reviewModalMode === "REJECT" && reviewReasonInput.trim().length < 20) ||
+                  (reviewModalMode === "REVISION" && !reviewReasonInput.trim())
+                }
+                className="text-xs font-bold"
+              >
+                {isProcessing
+                  ? "Menyimpan..."
+                  : reviewModalMode === "REVISION"
+                  ? "Kirim Permintaan Revisi"
+                  : "Konfirmasi Tolak Tugas"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -25,3 +25,17 @@ export async function getLandingImpactMetrics() {
     totalEarningsIdr: paidLedgerSum?._sum?.amountIdr ?? 0,
   };
 }
+
+export async function getPlatformConfig<T>(key: string, defaultValue: T): Promise<T> {
+  try {
+    const cfg = await prisma.platformConfig.findUnique({
+      where: { key },
+    });
+    if (!cfg || cfg.value === null || cfg.value === undefined) {
+      return defaultValue;
+    }
+    return cfg.value as T;
+  } catch {
+    return defaultValue;
+  }
+}

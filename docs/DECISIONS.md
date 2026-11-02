@@ -67,3 +67,56 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
 4. **Kompensasi dan Pemulihan Kuota (BR-S5a & BR-S5c):**
    - Pembatalan pekerjaan `OPEN` oleh UMKM memulihkan kuota paket langganan secara otomatis (+1).
    - Pembatalan pekerjaan `CLAIMED` sebelum mahasiswa menekan Mulai Kerjakan membatalkan tugas, mengubah penugasan menjadi `WITHDRAWN`, membatalkan entri saldo (`VOIDED`), dan memulihkan kuota (+1).
+
+---
+
+### [2026-11-02] Fase 4 — Discovery, Rekomendasi Pintar, dan Atomic Claim Mahasiswa
+
+1. **Formula Rekomendasi Skor D-2 (`features/jobs/ranking.ts`):**
+   - Skor penataan rekomendasi dihitung secara transparan berbasis empat komponen formula PRD §Modul D-2:
+     - `roleMatch` (+40 poin): jika peran pekerjaan ada di dalam daftar keahlian mahasiswa (`student.roles`).
+     - `tierBoost` (+0 BASIC/FREE, +10 PROFESSIONAL, +20 PREMIUM): insentif visibilitas paket langganan berbayar.
+     - `urgency` (tenggat $\le 72$ jam: $20 \times (1 - \text{hoursLeft} / 72)$, selain itu 0).
+     - `freshness` ($\max(0, 20 - \text{ageHours} / 6)$): prioritas tugas baru dalam 5 hari pertama.
+   - Hasil diuji di `tests/ranking.test.ts` mencakup pencocokan peran, boost tier langganan, dan sorting multi-job.
+
+2. **Pencegahan Race Condition Klaim Atomik (First-Come First-Served):**
+   - Menggunakan klausa atomic update `prisma.job.updateMany` dengan filter `WHERE id = jobId AND status = 'OPEN'`.
+   - Jika `count === 0`, transaksi dibatalkan seketika (`Job sudah diambil oleh mahasiswa lain`).
+   - Mencegah fenomena double-claim ketika ratusan mahasiswa berebut pekerjaan secara bersamaan. Teruji dalam simulasi konkurensi (10 permintaan simultan $\to$ tepat 1 yang berhasil mengklaim).
+
+3. **Integritas Aturan Bisnis Klaim Mahasiswa (BR-C1 s.d. BR-C5, BR-J5):**
+   - `BR-C1`: Batas beban simultan aktif berdasarkan level (NEWCOMER: 1, RELIABLE: 2, TRUSTED: 3).
+   - `BR-C2`: Batas unpaid/volunteer simultan (maksimal 1 pekerjaan volunteer aktif).
+   - `BR-C3`: Penegasan persetujuan sukarela untuk tugas tanpa imbalan uang (dialog konfirmasi eksplisit di antarmuka sebelum klaim).
+   - `BR-C4`: Penguncian level minimum pekerjaan (misal TRUSTED tidak bisa diambil oleh NEWCOMER).
+   - `BR-C5`: Proteksi Newcomer Lane (jika `beginnerFriendly = true`, selama 30 menit awal hanya level `NEWCOMER` yang berhak mengklaim).
+   - `BR-J5`: Batas cutoff deadline minimum (klaim ditolak jika sisa waktu menuju deadline kurang dari jam minimum pengerjaan).
+
+4. **Pencatatan Saldo Mahasiswa Pending (`LedgerEntry` HOLD):**
+   - Pada saat pekerjaan berbayar diklaim, transaksi membuat entri saldo mahasiswa `PENDING` senilai `studentShareIdr` berstatus `HOLD` bertipe `JOB_EARNING`.
+   - Mengirim notifikasi in-app otomatis ke UMKM pemilik tugas.
+
+---
+
+### [2026-11-02] Fase 5 — Eksekusi, Review, Revisi, dan Workspace Mahasiswa
+
+1. **Alur Pengerjaan Mahasiswa (`features/jobs/execution.ts`):**
+   - `startWork` (BR-E1): Mahasiswa mengaktifkan waktu kerja (`CLAIMED` $\to$ `IN_PROGRESS`) dengan mencatat stempel waktu `startedAt` dan mengirim notifikasi real-time ke UMKM.
+   - `withdrawJob` (BR-E6 & BR-E2): Mahasiswa diperbolehkan mundur sebelum mulai tanpa sanksi reputasi (`CLAIMED` $\to$ `OPEN`), penugasan diubah menjadi `WITHDRAWN`, dan entri saldo di-`VOIDED`. Jika mundur saat masa `IN_PROGRESS`, status penugasan dicatat dengan alasan.
+   - `submitWork` (BR-E2 & BR-J7):
+     - Memvalidasi tautan berkas terhadap whitelist domain terpercaya (`isValidDeliverableUrl`).
+     - Mewajibkan self-check pada seluruh kriteria penerimaan sebelum tombol submit aktif.
+     - Menghasilkan entri `Submission` bertahap (`number` 1, 2, 3), menandai `isLate` bila melewati batas waktu, dan mengaktifkan SLA review UMKM selama 3 hari (`reviewDueAt = now + 3d`).
+
+2. **Evaluasi Penilaian UMKM (BR-E3 & BR-E4):**
+   - **Accept**: Status tugas menjadi `ACCEPTED`, assignment `COMPLETED`, saldo `STUDENT_SHARE` diubah menjadi `PAYABLE`, platform fee diakui (`RECOGNIZED`), serta menghitung reputasi mahasiswa (+10 poin base, +3 bonus tanpa revisi, +2 bonus tepat waktu pada submit perdana). Evaluasi kenaikan level otomatis (50 poin $\to$ `RELIABLE`, 150 $\to$ `TRUSTED`, 300 $\to$ `EXPERT`).
+   - **Request Revision**: Dibatasi maksimal 2 kali (`revisionCount < 2`). Menyetel SLA revisi mahasiswa selama 3 hari (`revisionDueAt = now + 3d`), status tugas beralih ke `REVISION_REQUESTED`.
+   - **Reject**: Wajib menyertakan alasan minimal 20 karakter dan evaluasi kriteria gagal. Status beralih ke `REJECTED`, saldo ditahan (`HELD`), serta membuka jendela sanggahan sengketa mahasiswa selama 3 hari (`disputeUntil = now + 3d`).
+
+3. **Workspace Mahasiswa & Antarmuka Manajemen UMKM:**
+   - Halaman `/student/my-jobs` menyediakan tab interaktif (Aktif, Menunggu Review, Perlu Revisi, Selesai, Lainnya).
+   - Halaman `/student/my-jobs/[id]` menyediakan ruang kerja terpadu (Workspace) berisi linimasa status, form pengumpulan responsif, histori berkas, serta dialog pengunduran diri.
+   - Halaman `/umkm/jobs/[id]` diperkaya dengan panel evaluasi interaktif saat tugas berstatus `SUBMITTED`, memungkinkan UMKM menilai setiap kriteria secara mandiri sebelum mengambil keputusan.
+
+
