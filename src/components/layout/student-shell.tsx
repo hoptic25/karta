@@ -10,6 +10,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { NotificationBell } from "@/features/notifications";
 
 interface StudentShellProps {
   children: React.ReactNode;
@@ -126,7 +127,9 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
             <span>Katalog Tugas Mikro Kampus & UMKM Indonesia</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NotificationBell viewAllHref="/student/notifications" />
+
             <Link
               href="/"
               className="text-xs text-primary-brown/70 hover:text-earth-primary flex items-center gap-1 font-medium transition-colors"

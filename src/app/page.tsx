@@ -3,7 +3,7 @@ import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
 import { Button } from "@/components/ui/button";
 import { getActivePackages } from "@/features/subscription";
-import { getLandingImpactMetrics } from "@/features/platform";
+import { getCachedLandingMetrics } from "@/features/platform";
 import { getActiveCampuses } from "@/features/campus";
 import { formatCurrency } from "@/lib/format";
 import {
@@ -22,7 +22,7 @@ import {
 export default async function LandingPage() {
   const [packages, metrics, campuses] = await Promise.all([
     getActivePackages(),
-    getLandingImpactMetrics(),
+    getCachedLandingMetrics(),
     getActiveCampuses(),
   ]);
 

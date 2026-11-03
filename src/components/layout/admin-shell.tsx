@@ -16,6 +16,7 @@ import {
   LogOut,
   ExternalLink,
 } from "lucide-react";
+import { NotificationBell } from "@/features/notifications";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -135,6 +136,8 @@ export async function AdminShell({ children, activePath }: AdminShellProps) {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell viewAllHref="/admin/notifications" />
+
             <Link
               href="/"
               target="_blank"

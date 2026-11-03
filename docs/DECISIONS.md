@@ -191,3 +191,50 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
    - **Evaluasi Lazy (`evaluateJobTimeRules`)**: Dieksekusi otomatis ketika workspace tugas atau detail pekerjaan dibuka oleh pengguna, memastikan status selalu mutakhir tanpa harus menunggu jadwal cron.
    - **Endpoint Cron API (`/api/cron/tick`)**: Menerima request `GET` dan `POST` dengan pengamanan header `Authorization: Bearer <CRON_SECRET>` yang diverifikasi secara konstan-waktu (`crypto.timingSafeEqual`).
    - **Cadangan Penjadwalan**: Disediakan `vercel.json` untuk Vercel Cron harian dan `.github/workflows/cron.yml` untuk pemicu tiap jam via GitHub Actions.
+
+
+---
+
+### [2026-11-03] Fase 8 — Notifikasi, Impact Dashboard, Admin Overview, Audit Log, Error States, dan Demo Seed
+
+1. **Sistem Notifikasi In-App (PRD §Modul H-1):**
+   - Diimplementasikan di `src/features/notifications/notifications.ts` mencakup 5 fungsi inti: `createNotification`, `getUserNotifications` (paginated), `getUnreadNotificationCount`, `markNotificationAsRead`, dan `markAllNotificationsAsRead`.
+   - **Bell Icon & Polling**: Komponen `NotificationBell` (`notification-bell.tsx`) menampilkan ikon lonceng dengan badge angka unread di header navigasi. Polling otomatis setiap 30 detik menggunakan `setInterval` untuk memperbarui jumlah notifikasi baru secara real-time tanpa WebSocket.
+   - **Integrasi Shell**: `NotificationBell` diintegrasikan ke dalam `student-shell.tsx`, `umkm-shell.tsx`, dan `admin-shell.tsx` di area header navigasi.
+   - **Halaman Notifikasi**: Tersedia di `/student/notifications`, `/umkm/notifications`, dan `/admin/notifications` dengan tampilan daftar, filter tab (Semua/Belum Dibaca), dan tombol "Tandai Semua Dibaca".
+   - **Tipe Notifikasi**: Mendukung 8 tipe notifikasi yang dikirim secara programatik oleh fitur-fitur lain: `JOB_APPLIED`, `JOB_CLAIMED`, `JOB_SUBMITTED`, `JOB_ACCEPTED`, `JOB_REJECTED`, `JOB_DISPUTED`, `WITHDRAWAL_PROCESSED`, dan `GENERAL`.
+
+2. **Dashboard Dampak & SDG (PRD §Modul G-14 / J-1):**
+   - `src/features/platform/impact.ts` menyediakan dua fungsi:
+     - `getDetailedImpactMetrics`: Metrik lengkap untuk dasbor admin — total mahasiswa aktif, UMKM mitra, tugas selesai, total volume transaksi, rata-rata penghasilan per mahasiswa, distribusi provinsi mahasiswa, dan metrik SDG terkait (SDG 8: Decent Work, SDG 4: Quality Education, SDG 10: Reduced Inequalities).
+     - `getCachedLandingMetrics`: Versi ringkas untuk landing page publik (`/`) dengan cache 1 jam menggunakan `unstable_cache` dari Next.js untuk menghindari query database berlebihan pada halaman publik bertraffic tinggi.
+   - **Halaman Admin Impact** (`/admin/impact`): Menampilkan kartu-kartu metrik SDG dengan ikon warna sesuai identitas visual PBB, serta grafik batang horizontal distribusi provinsi mahasiswa.
+
+3. **Admin Overview Dashboard (PRD §Modul G-1):**
+   - `src/features/platform/admin-overview.ts` mengagregasi 4 area data dalam satu query batch:
+     - Ringkasan pengguna (total mahasiswa, UMKM, admin).
+     - Distribusi tugas berdasarkan status (`OPEN`, `CLAIMED`, `IN_PROGRESS`, `SUBMITTED`, `ACCEPTED`, dll.).
+     - Antrean aksi mendesak (pencairan menunggu verifikasi, sengketa terbuka, laporan kendala aktif, perpanjangan tenggat menunggu).
+     - Ringkasan keuangan (total volume platform, saldo tertahan escrow, total telah dicairkan).
+   - **Halaman `/admin`**: Menyajikan kartu statistik ringkas, indikator antrean dengan tautan langsung ke halaman terkait, dan tampilan grid distribusi status tugas.
+
+4. **Audit Log Terstruktur (PRD §Modul G-12):**
+   - `src/features/platform/audit.ts` menyediakan:
+     - `createAuditLog`: Mencatat jejak audit dengan aktor (`actorId`), aksi enum (`action`), subjek (`subjectType` + `subjectId`), dan metadata JSON opsional.
+     - `getAuditLogs`: Query dengan dukungan filter berdasarkan `action`, `actorId`, `subjectType`, pencarian teks bebas (`search`), dan paginasi.
+   - **Halaman `/admin/audit`**: Tabel audit log interaktif dengan pencarian real-time, filter dropdown per tipe aksi, dan tampilan metadata JSON yang dapat diperluas (expandable row). Timestamp ditampilkan dalam format lokal Indonesia.
+
+5. **Error, Loading, dan Not-Found States:**
+   - `src/app/loading.tsx`: Komponen loading global dengan animasi spinner dan branding KARTA.
+   - `src/app/error.tsx`: Error boundary global (`'use client'`) dengan pesan ramah pengguna, tombol "Coba Lagi" (`reset()`), dan tautan kembali ke beranda.
+   - `src/app/not-found.tsx`: Halaman 404 kustom dengan ilustrasi, pesan bahwa halaman tidak ditemukan, dan tombol navigasi kembali ke beranda.
+
+6. **Demo Seed Data (`prisma/seed-demo.ts`):**
+   - Script `pnpm db:seed:demo` menyediakan data demonstrasi lengkap untuk presentasi:
+     - 1 admin, 2 mahasiswa (Budi Santoso — UGM, Siti Rahayu — ITB), 2 UMKM (Kopi Senja, Batik Lestari).
+     - Langganan aktif paket BASIC dan PROFESSIONAL.
+     - 5 tugas mikro dalam berbagai status: `OPEN` (siap diklaim), `ACCEPTED` (selesai), dan `SUBMITTED` (menunggu review).
+     - Rating dan testimoni timbal balik.
+     - Entri ledger keuangan realistis (escrow hold, student share, platform fee).
+     - Notifikasi sampel dan jejak audit untuk demonstrasi antarmuka.
+   - Script bersifat idempoten: mencari user berdasarkan email terlebih dahulu sebelum membuat data baru dengan `upsert`.

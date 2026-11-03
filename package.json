@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:test:migrate": "dotenv run -f .env.test -- prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },

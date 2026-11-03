@@ -8,9 +8,9 @@ import {
   CreditCard,
   Building,
   LogOut,
-  Bell,
   ExternalLink,
 } from "lucide-react";
+import { NotificationBell } from "@/features/notifications";
 
 interface UmkmShellProps {
   children: React.ReactNode;
@@ -123,12 +123,7 @@ export async function UmkmShell({ children, activePath }: UmkmShellProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/umkm/notifications"
-              className="p-2 rounded-md border border-beige hover:bg-cream text-primary-brown transition-colors relative"
-            >
-              <Bell className="size-4" />
-            </Link>
+            <NotificationBell viewAllHref="/umkm/notifications" />
 
             <Link
               href="/"
