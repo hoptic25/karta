@@ -41,6 +41,19 @@ export async function completeStudentOnboarding(
     throw new OnboardingError("Username sudah digunakan. Silakan pilih username lain.", "USERNAME_TAKEN");
   }
 
+  // Validate campus email requirement if enabled in PlatformConfig (BR-A5)
+  const campusEmailConfig = await prisma.platformConfig.findUnique({
+    where: { key: "requireCampusEmail" },
+  });
+  const requireCampusEmail =
+    campusEmailConfig?.value === true || campusEmailConfig?.value === "true";
+  if (requireCampusEmail && !user.isCampusEmail && !user.email.toLowerCase().endsWith(".ac.id")) {
+    throw new OnboardingError(
+      "Pendaftaran mahasiswa mewajibkan penggunaan akun Google dengan email institusi (.ac.id).",
+      "CAMPUS_EMAIL_REQUIRED"
+    );
+  }
+
   // Validate referral code (BR-A2, BR-A3, BR-A4)
   const { referral, campus } = await validateReferralCode(input.referralCode, userId);
 

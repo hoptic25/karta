@@ -238,3 +238,41 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
      - Entri ledger keuangan realistis (escrow hold, student share, platform fee).
      - Notifikasi sampel dan jejak audit untuk demonstrasi antarmuka.
    - Script bersifat idempoten: mencari user berdasarkan email terlebih dahulu sebelum membuat data baru dengan `upsert`.
+
+
+---
+
+### [2026-11-03] Fase 9 (P1) — Newcomer Lane, Kebijakan Email Kampus, Halaman Hukum, Batas Arsitektur ESLint, dan E2E Lifecycle
+
+1. **Newcomer Lane (PRD §6.4 BR-C5):**
+   - Mendukung inklusi talenta mahasiswa pemula dan mengatasi masalah *cold-start* (SDG 10: Reduced Inequalities).
+   - Pekerjaan yang ditandai `beginnerFriendly: true` saat dipublikasikan akan mengaktifkan `newcomerLaneUntil = now + 30 menit`.
+   - Selama jendela 30 menit pertama, fungsi `checkClaimEligibility` hanya mengizinkan klaim bagi mahasiswa dengan level `NEWCOMER` atau `RELIABLE`. Level `TRUSTED` dan `EXPERT` ditolak hingga masa proteksi berakhir.
+   - Kartu pekerjaan pada katalog pencarian mahasiswa (`DiscoveryJobCard`) menampilkan lencana visual ramah pemula (*Newcomer Lane*).
+
+2. **Kebijakan Domain Email Kampus (PRD §6.1 BR-A5):**
+   - `User.isCampusEmail` secara otomatis diverifikasi dan disimpan saat pengguna masuk melalui Google OAuth (`src/auth.ts`) dengan memeriksa apakah alamat email berakhiran `.ac.id`.
+   - Pada saat proses penyelesaian profil onboarding mahasiswa (`completeStudentOnboarding`), sistem membaca konfigurasi global `PlatformConfig` dengan kunci `requireCampusEmail` (default `false`).
+   - Apabila diaktifkan (`true`), mahasiswa wajib menggunakan akun Google berakhiran domain perguruan tinggi (`.ac.id`); pendaftaran dengan domain umum akan ditolak dengan galat `CAMPUS_EMAIL_REQUIRED`.
+
+3. **Halaman Hukum & Kepatuhan Google OAuth (PRD §Modul J-2):**
+   - Halaman `/privacy` diperbarui secara menyeluruh untuk memenuhi persyaratan verifikasi Google OAuth Consent Screen: merinci jenis data profil Google yang diakses (nama, email, avatar), penegasan bahwa data tidak dijual kepada pihak ketiga atau dipakai melatih model kecerdasan buatan umum, proteksi enkripsi nomor rekening perbankan, batasan penyimpanan media Vercel Blob (2 MB), serta saluran kontak pengelola resmi.
+   - Halaman `/terms` menetapkan tata tertib ekosistem marketplace: mekanisme FCFS atomik, aturan Newcomer Lane, kewajiban pemenuhan Acceptance Checklist, batas revisi maksimal 2 kali, SLA auto-accept 3 hari, ketentuan pencairan saldo minimum Rp 50.000, serta penyelesaian sengketa independen oleh admin.
+
+4. **Aturan ESLint Penegakan Batas Arsitektur (PRD §4.3 Butir 1, 6, 7, 8, 9):**
+   - Diimplementasikan pada `eslint.config.mjs` menggunakan aturan `no-restricted-imports`:
+     - `src/lib/**`: Dilarang mengimpor modul dari `src/features/**` (memastikan utilitas dasar tetap bebas dari ketergantungan fitur bisnis).
+     - `src/app/**`: Halaman antarmuka dilarang memanggil database Prisma `@/lib/db` secara langsung, mewajibkan penggunaan `queries.ts` atau `actions.ts`.
+     - `src/app/**` dan `src/components/**`: Dilarang mengimpor modul internal fitur secara langsung (`service.ts` / `queries.ts`), mewajibkan penggunaan API publik fitur via `index.ts`.
+
+5. **Pengujian Siklus Hidup Penuh E2E (PRD §16 / §18 Happy Path):**
+   - Dibuat berkas pengujian integrasi `tests/e2e-lifecycle.test.ts` yang menguji rantai proses bisnis lengkap:
+     1. Validasi transisi status publikasi pekerjaan UMKM (`DRAFT` $\to$ `OPEN`).
+     2. Verifikasi eligibilitas dan klaim atomik mahasiswa (`OPEN` $\to$ `CLAIMED`).
+     3. Eksekusi tugas (`CLAIMED` $\to$ `IN_PROGRESS`).
+     4. Pengiriman deliverable dengan validasi checklist dan URL whitelist (`IN_PROGRESS` $\to$ `SUBMITTED`).
+     5. Peninjauan dan persetujuan oleh UMKM (`SUBMITTED` $\to$ `ACCEPTED`).
+     6. Alokasi saldo masuk ke status `PAYABLE` (minimal Rp 50.000).
+     7. Pengajuan penarikan dana oleh mahasiswa (`REQUESTED`).
+     8. Verifikasi transfer dan konfirmasi pembayaran oleh administrator (`PAID`) dengan pembaruan buku besar (*ledger*) dan pencatatan jejak audit (*audit log*).
+   - Pengujian kebijakan email kampus (`.ac.id`) berhasil memverifikasi penolakan domain non-kampus saat aturan aktif dan penerimaan domain kampus.
