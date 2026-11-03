@@ -276,3 +276,19 @@ Dokumen ini mencatat keputusan teknis penting dan resolusi ambiguitas selama pem
      7. Pengajuan penarikan dana oleh mahasiswa (`REQUESTED`).
      8. Verifikasi transfer dan konfirmasi pembayaran oleh administrator (`PAID`) dengan pembaruan buku besar (*ledger*) dan pencatatan jejak audit (*audit log*).
    - Pengujian kebijakan email kampus (`.ac.id`) berhasil memverifikasi penolakan domain non-kampus saat aturan aktif dan penerimaan domain kampus.
+
+
+6. **Dashboard Interaktif Mahasiswa & UMKM (PRD §11.1) dan Pembersihan Batas Arsitektur:**
+   - **Student Dashboard (`/student`)**:
+     - Menghadirkan ringkasan metrik utama: saldo siap ditarik (*payable balance*), tugas aktif berjalan beserta indikator batas waktu, progres reputasi level pengalaman dengan progress bar target naik level, dan total pekerjaan terselesaikan.
+     - Menyajikan kartu peringatan tenggat waktu terdekat (*nearest deadline alert*) dengan hitung mundur waktu.
+     - Menampilkan daftar penugasan aktif dan daftar rekomendasi 3 pekerjaan mikro terbuka yang relevan dengan keahlian mahasiswa.
+   - **UMKM Dashboard (`/umkm`)**:
+     - Menampilkan ringkasan alokasi kuota berbayar aktif dan sisa kuota gratis bulanan (3 proyek *volunteer*).
+     - Menampilkan rekap pekerjaan berdasarkan status operasional (sedang dikerjakan, draf, selesai).
+     - Bagian prioritas peninjauan tugas: menyoroti pekerjaan dalam status `SUBMITTED` dengan peringatan batas SLA 3 hari sebelum auto-accept dan tautan langsung ke peninjauan deliverable.
+   - **Mobile Bottom Navigation**:
+     - Ditambahkan navigasi bawah (*bottom bar*) responsif khusus layar ponsel pada shell mahasiswa (`student-shell.tsx`) dan shell UMKM (`umkm-shell.tsx`) untuk kenyamanan penggunaan perangkat seluler.
+   - **Pembersihan Akses Database Langsung (`@/lib/db`)**:
+     - Menghapus seluruh impor langsung `@/lib/db` dari direktori `src/app/**` sesuai penegakan aturan arsitektur PRD §4.3.
+     - Seluruh query profil dan data dashboard dialihkan ke fungsi terpusat `getStudentProfileByUserId`, `getUmkmProfileByUserId`, `getStudentDashboardSummary`, dan `getUmkmDashboardSummary`.

@@ -21,3 +21,4 @@ export * from "./components/student-workspace-view";
 export * from "./components/admin-disputes-client-view";
 export * from "./components/student-dispute-modal";
 export * from "./components/umkm-failure-modal";
+export * from "./components/student-dashboard-view";

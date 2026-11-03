@@ -1,12 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { StudentShell } from "@/components/layout/student-shell";
-import { prisma } from "@/lib/db";
+import { getStudentProfileByUserId } from "@/features/auth";
 import {
   getStudentMyJobs,
   StudentMyJobsView,
   type MyJobTab,
-  type MyJobAssignmentItem,
 } from "@/features/jobs";
 
 interface MyJobsPageProps {
@@ -27,9 +26,7 @@ export default async function StudentMyJobsPage({ searchParams }: MyJobsPageProp
     redirect("/umkm");
   }
 
-  const student = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  const student = await getStudentProfileByUserId(session.user.id);
 
   if (!student) {
     redirect("/onboarding/student");
@@ -47,11 +44,10 @@ export default async function StudentMyJobsPage({ searchParams }: MyJobsPageProp
   return (
     <StudentShell activePath="/student/my-jobs">
       <StudentMyJobsView
-        assignments={assignments as MyJobAssignmentItem[]}
+        assignments={assignments}
         currentTab={currentTab}
         searchQuery={searchQuery}
       />
     </StudentShell>
   );
 }
-

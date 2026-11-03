@@ -2,9 +2,10 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { UmkmShell } from "@/components/layout/umkm-shell";
-import { getUmkmSubscriptionOverview } from "@/features/subscription";
-import { prisma } from "@/lib/db";
+import { getUmkmProfileByUserId } from "@/features/auth";
+import { getUmkmDashboardSummary } from "@/features/jobs";
 import { Button } from "@/components/ui/button";
+import { formatDateTime } from "@/lib/format";
 import {
   Briefcase,
   PlusCircle,
@@ -13,7 +14,13 @@ import {
   AlertCircle,
   ArrowRight,
   CreditCard,
+  ChevronRight,
 } from "lucide-react";
+
+export const metadata = {
+  title: "Dashboard UMKM | KARTA",
+  description: "Pantau kuota posting, review pekerjaan mahasiswa, dan status langganan bisnis Anda.",
+};
 
 export default async function UmkmDashboardPage() {
   const session = await auth();
@@ -22,35 +29,19 @@ export default async function UmkmDashboardPage() {
     redirect("/login?as=umkm");
   }
 
-  const umkm = await prisma.umkmProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  const umkm = await getUmkmProfileByUserId(session.user.id);
 
   if (!umkm) {
     redirect("/onboarding/umkm");
   }
 
-  const [overview, jobCounts] = await Promise.all([
-    getUmkmSubscriptionOverview(umkm.id),
-    prisma.job.groupBy({
-      by: ["status"],
-      where: { umkmId: umkm.id },
-      _count: { status: true },
-    }),
-  ]);
-
-  const counts: Record<string, number> = {};
-  jobCounts.forEach((c) => {
-    counts[c.status] = c._count.status;
-  });
-
-  const remainingPaidQuota = overview.activePaidSub
-    ? overview.activePaidSub.quotaTotal - overview.activePaidSub.quotaUsed
-    : 0;
-
-  const remainingFreeQuota = overview.activeFreeSub
-    ? overview.activeFreeSub.quotaTotal - overview.activeFreeSub.quotaUsed
-    : 3;
+  const {
+    overview,
+    counts,
+    remainingPaidQuota,
+    remainingFreeQuota,
+    pendingReviewJobs,
+  } = await getUmkmDashboardSummary(umkm.id);
 
   return (
     <UmkmShell activePath="/umkm">
@@ -78,7 +69,7 @@ export default async function UmkmDashboardPage() {
 
         {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="border border-beige bg-white p-5 rounded-lg space-y-2">
+          <div className="border border-beige bg-white p-5 rounded-lg space-y-2 shadow-xs">
             <div className="flex items-center justify-between text-xs text-primary-brown/70">
               <span>Sisa Kuota Berbayar</span>
               <CreditCard className="size-4 text-primary-brown" />
@@ -93,12 +84,12 @@ export default async function UmkmDashboardPage() {
             </p>
           </div>
 
-          <div className="border border-beige bg-white p-5 rounded-lg space-y-2">
+          <div className="border border-beige bg-white p-5 rounded-lg space-y-2 shadow-xs">
             <div className="flex items-center justify-between text-xs text-primary-brown/70">
               <span>Kuota Gratis Bulan Ini</span>
-              <CheckCircle2 className="size-4 text-sage-green" />
+              <CheckCircle2 className="size-4 text-earth-sage" />
             </div>
-            <p className="font-heading text-3xl font-bold text-sage-green">
+            <p className="font-heading text-3xl font-bold text-earth-sage">
               {remainingFreeQuota} / 3
             </p>
             <p className="text-[11px] text-primary-brown/60">
@@ -106,7 +97,7 @@ export default async function UmkmDashboardPage() {
             </p>
           </div>
 
-          <div className="border border-beige bg-white p-5 rounded-lg space-y-2">
+          <div className="border border-beige bg-white p-5 rounded-lg space-y-2 shadow-xs">
             <div className="flex items-center justify-between text-xs text-primary-brown/70">
               <span>Sedang Dikerjakan</span>
               <Clock className="size-4 text-primary-brown" />
@@ -119,12 +110,12 @@ export default async function UmkmDashboardPage() {
             </p>
           </div>
 
-          <div className="border border-beige bg-white p-5 rounded-lg space-y-2">
+          <div className="border border-beige bg-white p-5 rounded-lg space-y-2 shadow-xs">
             <div className="flex items-center justify-between text-xs text-primary-brown/70">
               <span>Menunggu Review Anda</span>
-              <AlertCircle className="size-4 text-primary-brown" />
+              <AlertCircle className="size-4 text-amber-600" />
             </div>
-            <p className="font-heading text-3xl font-bold text-primary-brown">
+            <p className="font-heading text-3xl font-bold text-amber-700">
               {counts["SUBMITTED"] || 0}
             </p>
             <p className="text-[11px] text-primary-brown/60">
@@ -132,6 +123,53 @@ export default async function UmkmDashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* PRD §11.1: Pending Reviews with SLA Countdown */}
+        {pendingReviewJobs.length > 0 && (
+          <div className="border border-amber-200 bg-amber-50/50 p-6 rounded-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="size-5 text-amber-700" />
+                <h3 className="font-heading text-base font-bold text-primary-brown">
+                  Hasil Pekerjaan Menunggu Review ({pendingReviewJobs.length})
+                </h3>
+              </div>
+              <span className="text-[11px] text-amber-800 font-medium">
+                Pekerjaan otomatis diterima bila melewati batas SLA 3 hari
+              </span>
+            </div>
+
+            <div className="divide-y divide-amber-200/60 bg-white rounded-lg border border-amber-200/80">
+              {pendingReviewJobs.map((job) => (
+                <div key={job.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <Link
+                      href={`/umkm/jobs/${job.id}`}
+                      className="font-semibold text-xs text-primary-brown hover:text-earth-primary line-clamp-1"
+                    >
+                      {job.title}
+                    </Link>
+                    <p className="text-[11px] text-primary-brown/70">
+                      Diserahkan oleh <strong>{job.studentName}</strong> ({job.campusName}) • Pengiriman #{job.submissionNumber}
+                    </p>
+                    {job.reviewDueAt && (
+                      <p className="text-[10px] text-amber-800 font-medium flex items-center gap-1">
+                        <Clock className="size-3" />
+                        Batas Review: {formatDateTime(job.reviewDueAt)}
+                      </p>
+                    )}
+                  </div>
+
+                  <Link href={`/umkm/jobs/${job.id}`}>
+                    <Button size="sm" className="shrink-0 text-xs">
+                      Tinjau Hasil Kerja <ChevronRight className="size-3.5 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Links & CTA */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -175,4 +213,3 @@ export default async function UmkmDashboardPage() {
     </UmkmShell>
   );
 }
-

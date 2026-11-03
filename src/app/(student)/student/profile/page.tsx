@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { StudentShell } from "@/components/layout/student-shell";
-import { prisma } from "@/lib/db";
+import { getStudentProfileByUserId } from "@/features/auth";
 import { StudentProfileView } from "@/features/finance";
 
 export const metadata = {
@@ -20,19 +20,7 @@ export default async function StudentProfilePage() {
     redirect("/umkm");
   }
 
-  const student = await prisma.studentProfile.findUnique({
-    where: { userId: session.user.id },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-          image: true,
-        },
-      },
-      campus: true,
-    },
-  });
+  const student = await getStudentProfileByUserId(session.user.id);
 
   if (!student) {
     redirect("/onboarding/student");
@@ -44,4 +32,3 @@ export default async function StudentProfilePage() {
     </StudentShell>
   );
 }
-

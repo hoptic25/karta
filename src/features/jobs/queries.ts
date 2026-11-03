@@ -2,7 +2,10 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { evaluateJobTimeRules } from "@/features/platform";
-import { getAvailableSubscriptionsForUmkm } from "@/features/subscription";
+import {
+  getAvailableSubscriptionsForUmkm,
+  getUmkmSubscriptionOverview,
+} from "@/features/subscription";
 import type { JobStatus, Prisma } from "@/generated/prisma/client";
 
 export async function getUmkmJobs(
@@ -457,3 +460,270 @@ export async function getStudentJobWorkspace(jobId: string, studentId: string) {
 
   return assignment;
 }
+
+
+/**
+ * PRD §11.1: Dashboard ringkas Mahasiswa
+ * - Pekerjaan aktif + deadline terdekat
+ * - Saldo dapat ditarik (PAYABLE)
+ * - Level & progres poin
+ * - Rekomendasi 3 pekerjaan
+ */
+export async function getStudentDashboardSummary(studentId: string) {
+  const student = await prisma.studentProfile.findUnique({
+    where: { id: studentId },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          image: true,
+        },
+      },
+      campus: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!student) {
+    return null;
+  }
+
+  // Next level calculation
+  let nextLevelName: string | null = null;
+  let targetPoints: number | null = null;
+  let prevLevelPoints = 0;
+
+  if (student.level === "NEWCOMER") {
+    nextLevelName = "RELIABLE";
+    targetPoints = 50;
+    prevLevelPoints = 0;
+  } else if (student.level === "RELIABLE") {
+    nextLevelName = "TRUSTED";
+    targetPoints = 150;
+    prevLevelPoints = 50;
+  } else if (student.level === "TRUSTED") {
+    nextLevelName = "EXPERT";
+    targetPoints = 300;
+    prevLevelPoints = 150;
+  } else {
+    nextLevelName = null;
+    targetPoints = null;
+  }
+
+  const progressPct = targetPoints
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          Math.round(((student.points - prevLevelPoints) / (targetPoints - prevLevelPoints)) * 100)
+        )
+      )
+    : 100;
+
+  const pointsRemaining = targetPoints ? Math.max(0, targetPoints - student.points) : 0;
+
+  // Active assignments
+  const activeAssignmentsData = await prisma.jobAssignment.findMany({
+    where: {
+      studentId: student.id,
+      status: "ACTIVE",
+      job: {
+        status: {
+          in: ["CLAIMED", "IN_PROGRESS", "SUBMITTED", "REVISION_REQUESTED"],
+        },
+      },
+    },
+    include: {
+      job: {
+        include: {
+          umkm: {
+            select: {
+              businessName: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      job: {
+        deadlineAt: "asc",
+      },
+    },
+  });
+
+  const activeAssignments = activeAssignmentsData.map((a) => ({
+    id: a.id,
+    jobId: a.job.id,
+    title: a.job.title,
+    role: a.job.role,
+    isPaid: a.job.isPaid,
+    studentShareIdr: a.job.studentShareIdr,
+    status: a.job.status,
+    deadlineAt: a.job.deadlineAt,
+    businessName: a.job.umkm.businessName,
+  }));
+
+  const nearestDeadlineAssignment = activeAssignments[0] || null;
+
+  // Payable balance
+  const payableAggregate = await prisma.ledgerEntry.aggregate({
+    where: {
+      studentId: student.id,
+      status: "PAYABLE",
+    },
+    _sum: {
+      amountIdr: true,
+    },
+  });
+
+  const payableBalanceIdr = payableAggregate._sum.amountIdr || 0;
+
+  // Recommended 3 jobs
+  const recommendedJobsData = await prisma.job.findMany({
+    where: {
+      status: "OPEN",
+      isHidden: false,
+      role: {
+        in: student.roles,
+      },
+      deadlineAt: {
+        gt: new Date(),
+      },
+    },
+    include: {
+      umkm: {
+        select: {
+          businessName: true,
+          logoUrl: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 3,
+  });
+
+  const recommendedJobs = recommendedJobsData.map((j) => ({
+    id: j.id,
+    title: j.title,
+    role: j.role,
+    isPaid: j.isPaid,
+    studentShareIdr: j.studentShareIdr,
+    deadlineAt: j.deadlineAt,
+    beginnerFriendly: j.beginnerFriendly,
+    businessName: j.umkm.businessName,
+    logoUrl: j.umkm.logoUrl,
+  }));
+
+  return {
+    student: {
+      id: student.id,
+      username: student.username,
+      name: student.user.name,
+      avatarUrl: student.avatarUrl || student.user.image,
+      studyProgram: student.studyProgram,
+      campusName: student.campus.name,
+      level: student.level,
+      points: student.points,
+      completedJobs: student.completedJobs,
+      ratingAvg: student.ratingAvg,
+      roles: student.roles,
+      nextLevel: {
+        name: nextLevelName,
+        targetPoints,
+        progressPct,
+        pointsRemaining,
+      },
+    },
+    activeAssignments,
+    nearestDeadlineAssignment,
+    payableBalanceIdr,
+    recommendedJobs,
+  };
+}
+
+export type StudentDashboardSummary = NonNullable<Awaited<ReturnType<typeof getStudentDashboardSummary>>>;
+
+
+/**
+ * PRD §11.1: Dashboard ringkas UMKM
+ * - Kuota tersisa (berbayar & gratis)
+ * - Pekerjaan per status
+ * - Review yang menunggu (dengan sisa waktu SLA)
+ * - Informasi langganan berakhir
+ */
+export async function getUmkmDashboardSummary(umkmId: string) {
+  const [overview, jobCounts, pendingReviewJobs] = await Promise.all([
+    getUmkmSubscriptionOverview(umkmId),
+    prisma.job.groupBy({
+      by: ["status"],
+      where: { umkmId },
+      _count: { status: true },
+    }),
+    prisma.job.findMany({
+      where: {
+        umkmId,
+        status: "SUBMITTED",
+      },
+      include: {
+        assignments: {
+          where: { status: "ACTIVE" },
+          include: {
+            student: {
+              include: {
+                user: { select: { name: true, image: true } },
+                campus: { select: { name: true } },
+              },
+            },
+            submissions: {
+              orderBy: { number: "desc" },
+              take: 1,
+            },
+          },
+        },
+      },
+      orderBy: { reviewDueAt: "asc" },
+      take: 5,
+    }),
+  ]);
+
+  const counts: Record<string, number> = {};
+  jobCounts.forEach((c) => {
+    counts[c.status] = c._count.status;
+  });
+
+  const remainingPaidQuota = overview.activePaidSub
+    ? overview.activePaidSub.quotaTotal - overview.activePaidSub.quotaUsed
+    : 0;
+
+  const remainingFreeQuota = overview.activeFreeSub
+    ? overview.activeFreeSub.quotaTotal - overview.activeFreeSub.quotaUsed
+    : 3;
+
+  return {
+    overview,
+    counts,
+    remainingPaidQuota,
+    remainingFreeQuota,
+    pendingReviewJobs: pendingReviewJobs.map((j) => {
+      const activeAssignment = j.assignments[0];
+      return {
+        id: j.id,
+        title: j.title,
+        role: j.role,
+        isPaid: j.isPaid,
+        reviewDueAt: j.reviewDueAt,
+        studentName: activeAssignment?.student.user.name || "Mahasiswa Mitra",
+        campusName: activeAssignment?.student.campus.name || "Kampus Mitra",
+        submissionNumber: activeAssignment?.submissions[0]?.number || 1,
+      };
+    }),
+  };
+}
+
+export type UmkmDashboardSummary = Awaited<ReturnType<typeof getUmkmDashboardSummary>>;

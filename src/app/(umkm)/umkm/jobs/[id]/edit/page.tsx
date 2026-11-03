@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import { UmkmShell } from "@/components/layout/umkm-shell";
-import { prisma } from "@/lib/db";
+import { getUmkmProfileByUserId } from "@/features/auth";
 import { getJobForEdit, JobForm } from "@/features/jobs";
 
 interface JobEditPageProps {
@@ -16,9 +16,7 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
     redirect("/login?as=umkm");
   }
 
-  const umkm = await prisma.umkmProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  const umkm = await getUmkmProfileByUserId(session.user.id);
 
   if (!umkm) {
     redirect("/onboarding/umkm");
@@ -45,14 +43,13 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
           </h1>
           <p className="mt-1 text-xs text-primary-brown/70 font-sans">
             {mode === "EDIT_OPEN"
-              ? "Pekerjaan sedang aktif membuka pelamar. Anda dapat memperbarui judul, deskripsi, instruksi, dan tenggat waktu."
-              : "Perbarui informasi dan kriteria sebelum mempublikasikannya ke mahasiswa."}
+              ? "Pekerjaan berstatus OPEN hanya dapat diubah judul, deskripsi, checklist, dan tenggat waktu."
+              : "Lengkapi brief pekerjaan mikro sebelum dipublikasikan ke mahasiswa mitra."}
           </p>
         </div>
 
-        <JobForm initialJob={job} mode={mode} />
+        <JobForm mode={mode} initialJob={job} />
       </div>
     </UmkmShell>
   );
 }
-

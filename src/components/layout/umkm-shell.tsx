@@ -104,7 +104,7 @@ export async function UmkmShell({ children, activePath }: UmkmShellProps) {
       </aside>
 
       {/* MAIN CONTENT AREA (Kanan) */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Top Navbar */}
         <header className="h-16 border-b border-beige bg-white/90 backdrop-blur-xs px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3 md:hidden">
@@ -140,6 +140,27 @@ export async function UmkmShell({ children, activePath }: UmkmShellProps) {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
+
+        {/* Bottom Navigation (Mobile Only) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-beige flex items-center justify-around py-2 px-1 md:hidden">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePath === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+                  isActive ? "text-earth-primary font-bold" : "text-primary-brown/60"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label.split(" ")[0]}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );

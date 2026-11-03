@@ -110,7 +110,7 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
       isHidden: false,
       isPaid: true,
       minLevel: "NEWCOMER",
-      deadlineAt: new Date(baseNow.getTime() + 48 * 60 * 60 * 1000),
+      deadlineAt: new Date(baseNow.getTime() + 96 * 60 * 60 * 1000),
       packageTier: "BASIC",
       beginnerFriendly: true,
       newcomerLaneUntil: new Date(baseNow.getTime() + 15 * 60 * 1000), // Active Newcomer Lane

@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { notFound, redirect } from "next/navigation";
 import { UmkmShell } from "@/components/layout/umkm-shell";
-import { prisma } from "@/lib/db";
+import { getUmkmProfileByUserId } from "@/features/auth";
 import {
   getUmkmJobDetail,
   getJobPublishOptions,
@@ -20,9 +20,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
     redirect("/login?as=umkm");
   }
 
-  const umkm = await prisma.umkmProfile.findUnique({
-    where: { userId: session.user.id },
-  });
+  const umkm = await getUmkmProfileByUserId(session.user.id);
 
   if (!umkm) {
     redirect("/onboarding/umkm");
@@ -39,11 +37,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <UmkmShell activePath="/umkm/jobs">
-      <JobDetailView
-        job={job}
-        availableSubscriptions={availableSubscriptions}
-      />
+      <JobDetailView job={job} availableSubscriptions={availableSubscriptions} />
     </UmkmShell>
   );
 }
-

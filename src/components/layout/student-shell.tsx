@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import {
+  LayoutDashboard,
   Compass,
   Briefcase,
   Wallet,
@@ -29,6 +30,7 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
   }
 
   const navItems = [
+    { label: "Dashboard", href: "/student", icon: LayoutDashboard },
     { label: "Cari Lowongan", href: "/student/jobs", icon: Compass },
     { label: "Pekerjaan Saya", href: "/student/my-jobs", icon: Briefcase },
     { label: "Penghasilan", href: "/student/earnings", icon: Wallet },
@@ -69,14 +71,14 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  {item.label}
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
         </div>
 
-        {/* User Card & Logout */}
+        {/* User Profile & Sign Out Footer */}
         <div className="p-4 border-t border-beige space-y-3">
           <div className="flex items-center gap-3 px-2">
             <div className="h-9 w-9 rounded-full bg-earth-primary/10 text-earth-primary flex items-center justify-center font-bold text-sm shrink-0">
@@ -110,7 +112,7 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Top bar mobile */}
         <header className="h-16 border-b border-beige bg-white flex items-center justify-between px-4 md:px-8">
           <div className="flex items-center gap-3 md:hidden">
@@ -144,8 +146,28 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
+
+        {/* Bottom Navigation (Mobile Only) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-beige flex items-center justify-around py-2 px-1 md:hidden">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activePath === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+                  isActive ? "text-earth-primary font-bold" : "text-primary-brown/60"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{item.label.split(" ")[0]}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );
 }
-
