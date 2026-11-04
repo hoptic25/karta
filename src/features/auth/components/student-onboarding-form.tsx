@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   studentOnboardingSchema,
@@ -36,7 +36,7 @@ export function StudentOnboardingForm() {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<StudentOnboardingInput>({
     resolver: zodResolver(studentOnboardingSchema),
@@ -51,8 +51,16 @@ export function StudentOnboardingForm() {
     },
   });
 
-  const selectedRoles = watch("roles") || [];
-  const currentReferral = watch("referralCode");
+  const selectedRoles = useWatch({
+    control,
+    name: "roles",
+    defaultValue: [] as (typeof jobRolesEnum)[number][],
+  });
+  const currentReferral = useWatch({
+    control,
+    name: "referralCode",
+    defaultValue: "",
+  });
 
   const handleVerifyReferral = async () => {
     if (!currentReferral || currentReferral.trim().length < 3) {
