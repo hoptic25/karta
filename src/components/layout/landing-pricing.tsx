@@ -34,10 +34,9 @@ export function LandingPricing({ packages }: LandingPricingProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cream border border-beige text-xs font-semibold text-primary-brown mb-4">
-            <Sparkles className="size-3.5 text-earth-primary" />
-            <span>Pricelist Resmi KARTA</span>
-          </div>
+          <p className="text-xs font-bold tracking-widest uppercase text-earth-primary/70 mb-3">
+            Pricelist Resmi KARTA
+          </p>
           <h2 className="font-heading text-3xl sm:text-4xl font-semibold text-primary-brown">
             Paket Langganan Transparan untuk Segala Skala Usaha
           </h2>
