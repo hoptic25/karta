@@ -5,11 +5,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-primary-brown: #5a4639;
-  --color-sage-green: #a3b18a;
-  --color-beige: #c9b9a7;
-  --color-cream: #f7f4ed;
+  --color-primary-brown: #4a3728;
+  --color-sage-green: #3d6856;
+  --color-beige: #d8cabe;
+  --color-cream: #faf7f2;
   --color-peach: #f4d7c7;
+
+  /* Earth-tone aliases with accessible contrast */
+  --color-earth-primary: #4a3728;
+  --color-earth-dark: #2b1f17;
+  --color-earth-sage: #2d5a4c;
+  --color-earth-sand: #e6ded4;
+  --color-earth-terracotta: #b45309;
 
   --font-sans: var(--font-montserrat), sans-serif;
   --font-heading: var(--font-playfair), serif;
@@ -48,35 +55,35 @@
 }
 
 :root {
-  /* KARTA Earth-tone Palette (design_system.md) */
-  --background: #f7f4ed; /* Cream */
-  --foreground: #5a4639; /* Primary Brown */
+  /* KARTA Earth-tone Palette (accessible contrast) */
+  --background: #faf7f2; /* Cream background */
+  --foreground: #38291e; /* Deep dark brown for crisp text readability */
   --card: #ffffff;
-  --card-foreground: #5a4639;
+  --card-foreground: #38291e;
   --popover: #ffffff;
-  --popover-foreground: #5a4639;
-  --primary: #5a4639; /* Primary Brown */
+  --popover-foreground: #38291e;
+  --primary: #4a3728; /* Primary Brown */
   --primary-foreground: #ffffff;
-  --secondary: #c9b9a7; /* Beige */
-  --secondary-foreground: #5a4639;
-  --muted: #ebe5dc;
-  --muted-foreground: #7d6b5e;
+  --secondary: #d8cabe; /* Beige */
+  --secondary-foreground: #38291e;
+  --muted: #ebe4db;
+  --muted-foreground: #695648;
   --accent: #f4d7c7; /* Peach */
-  --accent-foreground: #5a4639;
+  --accent-foreground: #38291e;
   --destructive: #b91c1c;
-  --border: #c9b9a7; /* Beige */
-  --input: #c9b9a7;
-  --ring: #5a4639;
-  --radius: 0.5rem;
+  --border: #d8cabe; /* Crisp beige */
+  --input: #d8cabe;
+  --ring: #4a3728;
+  --radius: 0.75rem;
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #5a4639;
-  --sidebar-primary: #5a4639;
+  --sidebar-foreground: #38291e;
+  --sidebar-primary: #4a3728;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f7f4ed;
-  --sidebar-accent-foreground: #5a4639;
-  --sidebar-border: #c9b9a7;
-  --sidebar-ring: #5a4639;
+  --sidebar-accent: #faf7f2;
+  --sidebar-accent-foreground: #38291e;
+  --sidebar-border: #d8cabe;
+  --sidebar-ring: #4a3728;
 }
 
 @layer base {
@@ -88,6 +95,8 @@
     font-family: var(--font-montserrat), sans-serif;
     background-color: var(--background);
     color: var(--foreground);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-playfair), serif;

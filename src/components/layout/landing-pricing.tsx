@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
   Sparkles,
+  Globe,
   Building2,
   Users2,
   ArrowRight,
@@ -75,10 +76,18 @@ export function LandingPricing({ packages }: LandingPricingProps) {
             </div>
           </div>
 
-          <p className="mt-3 text-xs text-primary-brown/60">
-            {selectedSegment === "PARTNER"
-              ? "✨ Harga subsidi khusus UMKM yang terafiliasi atau dibina oleh perguruan tinggi mitra KARTA."
-              : "🌐 Akses terbuka untuk seluruh pemilik usaha & UMKM di Indonesia tanpa syarat kemitraan."}
+          <p className="mt-3 text-xs text-primary-brown/60 flex items-center justify-center gap-1.5">
+            {selectedSegment === "PARTNER" ? (
+              <>
+                <Sparkles className="size-3.5 text-earth-primary shrink-0" />
+                <span>Harga subsidi khusus UMKM yang terafiliasi atau dibina oleh perguruan tinggi mitra KARTA.</span>
+              </>
+            ) : (
+              <>
+                <Globe className="size-3.5 text-earth-primary shrink-0" />
+                <span>Akses terbuka untuk seluruh pemilik usaha &amp; UMKM di Indonesia tanpa syarat kemitraan.</span>
+              </>
+            )}
           </p>
         </div>
 
