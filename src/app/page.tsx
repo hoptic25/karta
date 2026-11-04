@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
+import { LandingPricing } from "@/components/layout/landing-pricing";
 import { Button } from "@/components/ui/button";
 import { getActivePackages } from "@/features/subscription";
 import { getCachedLandingMetrics } from "@/features/platform";
@@ -26,9 +27,6 @@ export default async function LandingPage() {
     getCachedLandingMetrics(),
     getActiveCampuses(),
   ]);
-
-  const partnerPackages = packages.filter((p) => p.segment === "PARTNER");
-  const freePackage = packages.find((p) => p.segment === "FREE");
 
   return (
     <div className="flex min-h-screen flex-col bg-cream text-primary-brown selection:bg-peach selection:text-primary-brown">
@@ -242,99 +240,7 @@ export default async function LandingPage() {
         </section>
 
         {/* 4. PAKET & HARGA (PRICING) */}
-        <section id="paket" className="border-b border-beige py-24 bg-white/50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="font-heading text-3xl font-semibold text-primary-brown">
-                Paket Langganan Transparan untuk Segala Skala Usaha
-              </h2>
-              <p className="mt-4 text-sm sm:text-base text-primary-brown/80">
-                Semua paket berbayar mengalokasikan 60% langsung kepada mahasiswa pelaksana dan 40% untuk operasional platform.
-              </p>
-            </div>
-
-            {/* Free Tier Notice */}
-            {freePackage && (
-              <div className="mb-10 p-6 rounded-lg border border-beige bg-cream/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-heading text-xl font-medium text-primary-brown">
-                    {freePackage.name}
-                  </h3>
-                  <p className="text-sm text-primary-brown/80 mt-1">
-                    Setiap UMKM berhak atas 3 kuota pekerjaan sukarela (Volunteer Project) gratis setiap bulan. Mahasiswa tetap memperoleh poin reputasi penuh.
-                  </p>
-                </div>
-                <Link href="/login?as=umkm">
-                  <Button variant="secondary" size="sm">
-                    Coba Gratis
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Packages Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {partnerPackages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  className={`border rounded-lg p-6 flex flex-col justify-between ${
-                    pkg.tier === "PREMIUM"
-                      ? "border-primary-brown bg-[#c9b9a7]/20"
-                      : "border-beige bg-white"
-                  }`}
-                >
-                  <div>
-                    <h3 className="font-heading text-2xl font-medium text-primary-brown">
-                      {pkg.name}
-                    </h3>
-                    <p className="text-xs uppercase tracking-wider text-primary-brown/70 font-semibold mt-1">
-                      Khusus Mitra Kampus
-                    </p>
-
-                    <div className="mt-6 mb-6">
-                      <span className="font-heading text-3xl font-bold text-primary-brown">
-                        {formatCurrency(pkg.priceIdr)}
-                      </span>
-                      <span className="text-xs text-primary-brown/70 ml-1">/ bulan</span>
-                    </div>
-
-                    <ul className="space-y-3 text-sm text-primary-brown/80 border-t border-beige pt-4">
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-sage-green shrink-0" />
-                        <span><strong>{pkg.jobQuota}</strong> Kuota Pekerjaan Mikro</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-sage-green shrink-0" />
-                        <span>Alokasi <strong>{formatCurrency(pkg.allocationPerJobIdr)}</strong> / pekerjaan</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-sage-green shrink-0" />
-                        <span>Imbalan Mahasiswa: <strong>{formatCurrency(Math.floor((pkg.allocationPerJobIdr * 60) / 100))}</strong></span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-sage-green shrink-0" />
-                        <span>Masa berlaku 30 hari</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="mt-8 pt-4">
-                    <Link href="/login?as=umkm" className="block">
-                      <Button className="w-full">
-                        Pilih Paket
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Regular Non-Partner Note */}
-            <div className="mt-12 text-center text-xs text-primary-brown/70 max-w-2xl mx-auto">
-              *Tersedia juga paket UMKM Reguler (non-mitra) mulai dari Rp 90.000 / bulan. UMKM yang terafiliasi dengan program binaan kampus mitra akan diverifikasi oleh admin untuk mendapatkan harga bersubsidi.
-            </div>
-          </div>
-        </section>
+        <LandingPricing packages={packages} />
 
         {/* 5. PEMBEDA KARTA (DIFFERENTIATORS D1–D6) */}
         <section id="pembeda" className="border-b border-beige py-24">
