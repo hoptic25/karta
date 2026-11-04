@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export default function SuspendedPage() {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-cream px-4 py-12">
       <div className="w-full max-w-md text-center space-y-6">
-        <span className="font-heading text-3xl font-bold tracking-tight text-primary-brown">
-          KARTA
-        </span>
+        <div className="flex justify-center">
+          <BrandLogo size="lg" />
+        </div>
 
         <div className="border border-destructive/40 bg-white p-8 rounded-lg space-y-4">
           <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive">
@@ -34,9 +35,9 @@ export default function SuspendedPage() {
             .
           </p>
 
-          <div className="pt-4 border-t border-beige">
+          <div className="pt-2">
             <Link href="/">
-              <Button variant="secondary" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full">
                 Kembali ke Beranda
               </Button>
             </Link>
@@ -46,4 +47,3 @@ export default function SuspendedPage() {
     </div>
   );
 }
-

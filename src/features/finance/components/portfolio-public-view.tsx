@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import {
   GraduationCap,
   Award,
@@ -68,14 +69,11 @@ export function PortfolioPublicView({ data }: PortfolioPublicViewProps) {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Navigation Breadcrumb / Header */}
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-heading text-xl font-bold text-primary-brown">
-              KARTA
-            </span>
-            <span className="text-[10px] uppercase font-bold tracking-wider bg-earth-sage text-white px-1.5 py-0.5 rounded">
-              Portofolio Mahasiswa
-            </span>
-          </Link>
+          <BrandLogo
+            size="sm"
+            badge="Portofolio Mahasiswa"
+            badgeClassName="bg-earth-sage text-white font-semibold"
+          />
           <Link
             href="/register?as=umkm"
             className={buttonVariants({

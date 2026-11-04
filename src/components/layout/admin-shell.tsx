@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import {
   LayoutDashboard,
   CreditCard,
@@ -55,14 +56,11 @@ export async function AdminShell({ children, activePath }: AdminShellProps) {
         <div>
           {/* Brand */}
           <div className="h-16 border-b border-beige px-6 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-heading text-2xl font-bold tracking-tight text-primary-brown">
-                KARTA
-              </span>
-              <span className="text-[10px] font-semibold tracking-wider uppercase bg-destructive text-white px-1.5 py-0.5 rounded">
-                ADMIN
-              </span>
-            </Link>
+            <BrandLogo
+              size="sm"
+              badge="ADMIN"
+              badgeClassName="bg-destructive text-white font-semibold"
+            />
           </div>
 
           {/* Nav items */}
@@ -120,13 +118,12 @@ export async function AdminShell({ children, activePath }: AdminShellProps) {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
         <header className="h-16 border-b border-beige bg-white/90 backdrop-blur-xs px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3 lg:hidden">
-            <Link href="/" className="font-heading text-xl font-bold text-primary-brown">
-              KARTA
-            </Link>
-            <span className="text-[10px] font-semibold uppercase bg-destructive text-white px-1.5 py-0.5 rounded">
-              ADMIN
-            </span>
+          <div className="flex items-center gap-2 lg:hidden">
+            <BrandLogo
+              size="xs"
+              badge="ADMIN"
+              badgeClassName="bg-destructive text-white font-semibold"
+            />
           </div>
 
           <div className="hidden sm:block">

@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { Compass, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-cream p-4">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-beige shadow-lg text-center space-y-5">
+        <div className="flex justify-center">
+          <BrandLogo size="md" />
+        </div>
+
         <div className="w-14 h-14 rounded-2xl bg-earth-primary/10 text-earth-primary flex items-center justify-center mx-auto">
           <Compass className="w-7 h-7" />
         </div>
@@ -34,4 +39,3 @@ export default function NotFound() {
     </div>
   );
 }
-

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export function PublicFooter() {
   return (
@@ -7,9 +8,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand info */}
           <div className="space-y-4 md:col-span-2">
-            <span className="font-heading text-2xl font-bold tracking-tight text-primary-brown">
-              KARTA
-            </span>
+            <BrandLogo size="md" />
             <p className="max-w-md text-sm text-primary-brown/80 leading-relaxed font-sans">
               Platform B2B2C Campus-Based Micro Job Marketplace yang menghubungkan
               UMKM dengan talenta mahasiswa kampus mitra. Bangun reputasi

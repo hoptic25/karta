@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import {
   LayoutDashboard,
   Compass,
@@ -44,14 +45,11 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
         <div>
           {/* Brand */}
           <div className="h-16 border-b border-beige px-6 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-heading text-2xl font-bold tracking-tight text-primary-brown">
-                KARTA
-              </span>
-              <span className="text-[10px] font-semibold tracking-wider uppercase bg-earth-sage text-white px-1.5 py-0.5 rounded">
-                MAHASISWA
-              </span>
-            </Link>
+            <BrandLogo
+              size="sm"
+              badge="Mahasiswa"
+              badgeClassName="bg-earth-sage text-white font-semibold"
+            />
           </div>
 
           {/* Nav Items */}
@@ -115,13 +113,12 @@ export async function StudentShell({ children, activePath }: StudentShellProps) 
       <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Top bar mobile */}
         <header className="h-16 border-b border-beige bg-white flex items-center justify-between px-4 md:px-8">
-          <div className="flex items-center gap-3 md:hidden">
-            <Link href="/" className="font-heading text-xl font-bold text-primary-brown">
-              KARTA
-            </Link>
-            <span className="text-[9px] font-bold bg-earth-sage text-white px-1.5 py-0.5 rounded uppercase">
-              Mhs
-            </span>
+          <div className="flex items-center gap-2 md:hidden">
+            <BrandLogo
+              size="xs"
+              badge="Mhs"
+              badgeClassName="bg-earth-sage text-white font-semibold"
+            />
           </div>
 
           <div className="hidden md:flex items-center gap-2 text-xs text-primary-brown/60">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { GraduationCap, Briefcase, ArrowRight } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export default async function OnboardingHubPage() {
   const session = await auth();
@@ -17,11 +18,9 @@ export default async function OnboardingHubPage() {
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-cream px-4 py-12">
       <div className="w-full max-w-xl space-y-8">
-        <div className="text-center">
-          <span className="font-heading text-3xl font-bold tracking-tight text-primary-brown">
-            KARTA
-          </span>
-          <h1 className="mt-3 font-heading text-2xl sm:text-3xl font-semibold text-primary-brown">
+        <div className="flex flex-col items-center text-center">
+          <BrandLogo size="lg" />
+          <h1 className="mt-4 font-heading text-2xl sm:text-3xl font-semibold text-primary-brown">
             Pilih Peran Anda di Karta
           </h1>
           <p className="mt-2 text-sm text-primary-brown/75 font-sans">

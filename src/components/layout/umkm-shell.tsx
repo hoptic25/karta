@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import {
   LayoutDashboard,
   Briefcase,
@@ -43,14 +44,11 @@ export async function UmkmShell({ children, activePath }: UmkmShellProps) {
         <div>
           {/* Brand */}
           <div className="h-16 border-b border-beige px-6 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="font-heading text-2xl font-bold tracking-tight text-primary-brown">
-                KARTA
-              </span>
-              <span className="text-[10px] font-semibold tracking-wider uppercase bg-primary-brown text-white px-1.5 py-0.5 rounded">
-                UMKM
-              </span>
-            </Link>
+            <BrandLogo
+              size="sm"
+              badge="UMKM"
+              badgeClassName="bg-primary-brown text-white font-semibold"
+            />
           </div>
 
           {/* Navigation items */}
@@ -107,13 +105,12 @@ export async function UmkmShell({ children, activePath }: UmkmShellProps) {
       <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Top Navbar */}
         <header className="h-16 border-b border-beige bg-white/90 backdrop-blur-xs px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3 md:hidden">
-            <Link href="/" className="font-heading text-xl font-bold text-primary-brown">
-              KARTA
-            </Link>
-            <span className="text-[10px] font-semibold uppercase bg-primary-brown text-white px-1.5 py-0.5 rounded">
-              UMKM
-            </span>
+          <div className="flex items-center gap-2 md:hidden">
+            <BrandLogo
+              size="xs"
+              badge="UMKM"
+              badgeClassName="bg-primary-brown text-white font-semibold"
+            />
           </div>
 
           <div className="hidden sm:block">

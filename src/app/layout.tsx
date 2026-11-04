@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "KARTA — Campus-Based Micro Job Marketplace",
   description:
     "Menghubungkan UMKM dengan mahasiswa kampus mitra untuk menyelesaikan tugas mikro berkualitas, membangun reputasi terverifikasi dan dampak nyata.",
+  icons: {
+    icon: "/logo/karta.webp",
+    apple: "/logo/karta.webp",
+  },
 };
 
 export default function RootLayout({

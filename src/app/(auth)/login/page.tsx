@@ -3,6 +3,7 @@ import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-bu
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { GraduationCap, Briefcase } from "lucide-react";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export default async function LoginPage({
   searchParams,
@@ -30,13 +31,9 @@ export default async function LoginPage({
     <div className="min-h-screen flex flex-col justify-center items-center bg-cream px-4 py-12">
       <div className="w-full max-w-md space-y-6">
         {/* Brand */}
-        <div className="text-center">
-          <Link href="/" className="inline-block group">
-            <span className="font-heading text-3xl font-bold tracking-tight text-primary-brown">
-              KARTA
-            </span>
-          </Link>
-          <p className="mt-2 text-xs font-medium text-primary-brown/70 tracking-widest uppercase">
+        <div className="flex flex-col items-center text-center">
+          <BrandLogo size="lg" />
+          <p className="mt-3 text-xs font-medium text-primary-brown/70 tracking-widest uppercase">
             Satu Pintu Masuk Pengguna
           </p>
         </div>

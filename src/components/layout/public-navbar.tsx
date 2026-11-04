@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export async function PublicNavbar() {
   const session = await auth();
@@ -9,14 +10,12 @@ export async function PublicNavbar() {
     <header className="sticky top-0 z-40 w-full border-b border-beige bg-cream/95 backdrop-blur-xs">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="font-heading text-2xl font-bold tracking-tight text-primary-brown">
-            KARTA
-          </span>
+        <div className="flex items-center gap-2">
+          <BrandLogo size="md" />
           <span className="hidden sm:inline-block text-xs font-medium text-primary-brown/60 tracking-wider uppercase border-l border-beige pl-2">
             Campus Marketplace
           </span>
-        </Link>
+        </div>
 
         {/* Navigation Links */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-primary-brown">
