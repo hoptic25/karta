@@ -12,10 +12,10 @@ export interface BrandLogoProps {
 }
 
 const sizeMap = {
-  xs: { dimension: 20, text: "text-base", img: "size-5" },
-  sm: { dimension: 24, text: "text-xl", img: "size-6" },
-  md: { dimension: 32, text: "text-2xl", img: "size-8" },
-  lg: { dimension: 44, text: "text-3xl", img: "size-11" },
+  xs: { dimension: 24, text: "text-base", img: "size-6" },
+  sm: { dimension: 32, text: "text-xl", img: "size-8" },
+  md: { dimension: 40, text: "text-2xl", img: "size-10" },
+  lg: { dimension: 52, text: "text-3xl", img: "size-13" },
   xl: { dimension: 64, text: "text-4xl", img: "size-16" },
 };
 
@@ -24,7 +24,7 @@ export function BrandLogo({
   className = "",
   imgClassName = "",
   size = "md",
-  showText = true,
+  showText = false,
   badge,
   badgeClassName = "bg-primary-brown text-white",
 }: BrandLogoProps) {
