@@ -25,8 +25,10 @@ export const authConfig: NextAuthConfig = {
 
       // Allow manually updating session from client/server actions
       if (trigger === "update" && session) {
-        if (session.role !== undefined) token.role = session.role;
-        if (session.status !== undefined) token.status = session.status;
+        const newRole = (session as { role?: Role; user?: { role?: Role } }).role ?? (session as { user?: { role?: Role } }).user?.role;
+        const newStatus = (session as { status?: UserStatus; user?: { status?: UserStatus } }).status ?? (session as { user?: { status?: UserStatus } }).user?.status;
+        if (newRole !== undefined) token.role = newRole;
+        if (newStatus !== undefined) token.status = newStatus;
       }
 
       return token;

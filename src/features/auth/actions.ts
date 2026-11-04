@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { unstable_update } from "@/auth";
 import { requireUser } from "./guards";
 import {
   studentOnboardingSchema,
@@ -25,6 +26,11 @@ export async function completeStudentOnboardingAction(
     }
 
     const student = await completeStudentOnboarding(user.id, parsed.data);
+    await unstable_update({
+      user: {
+        role: "STUDENT",
+      },
+    });
     revalidatePath("/", "layout");
     return success({ studentId: student.id, username: student.username });
   } catch (err: unknown) {
@@ -45,6 +51,11 @@ export async function completeUmkmOnboardingAction(
     }
 
     const umkm = await completeUmkmOnboarding(user.id, parsed.data);
+    await unstable_update({
+      user: {
+        role: "UMKM",
+      },
+    });
     revalidatePath("/", "layout");
     return success({ umkmId: umkm.id });
   } catch (err: unknown) {
