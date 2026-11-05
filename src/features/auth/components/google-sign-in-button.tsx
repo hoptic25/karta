@@ -15,11 +15,16 @@ export function GoogleSignInButton({
 
   const handleLogin = async () => {
     setLoading(true);
-    let redirectTo = callbackUrl || "/onboarding";
-    if (rolePreference === "student") {
-      redirectTo = "/onboarding/student";
-    } else if (rolePreference === "umkm") {
-      redirectTo = "/onboarding/umkm";
+    // Prioritize explicit callbackUrl; otherwise target the dashboard for the selected role
+    let redirectTo = callbackUrl;
+    if (!redirectTo) {
+      if (rolePreference === "student") {
+        redirectTo = "/student";
+      } else if (rolePreference === "umkm") {
+        redirectTo = "/umkm";
+      } else {
+        redirectTo = "/onboarding";
+      }
     }
 
     try {

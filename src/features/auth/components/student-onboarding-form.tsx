@@ -103,8 +103,7 @@ export function StudentOnboardingForm() {
       setServerError(res.error.message);
       return;
     }
-    router.push("/student");
-    router.refresh();
+    router.replace("/student");
   };
 
   return (
@@ -278,11 +277,10 @@ export function StudentOnboardingForm() {
               <div
                 key={role}
                 onClick={() => handleRoleToggle(role)}
-                className={`p-3 rounded-md border cursor-pointer flex items-center gap-3 transition-colors ${
-                  isChecked
+                className={`p-3 rounded-md border cursor-pointer flex items-center gap-3 transition-colors ${isChecked
                     ? "border-primary-brown bg-primary-brown/5 text-primary-brown"
                     : "border-beige bg-cream/30 hover:bg-cream"
-                }`}
+                  }`}
               >
                 <Checkbox
                   checked={isChecked}

@@ -42,9 +42,9 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       const baseToken = await authConfig.callbacks?.jwt?.({ token, user, trigger, session }) ?? token;
       
-      // When user logs in or we check db
+      // Only query DB on initial login, explicit session update, or if token.id is missing
       const email = baseToken.email?.toLowerCase();
-      if (email && (!baseToken.role || adminEmails.includes(email))) {
+      if (email && (user || trigger === "update" || !baseToken.id || adminEmails.includes(email))) {
         const dbUser = await prisma.user.findUnique({
           where: { email },
           select: { id: true, role: true, status: true },

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { unstable_update } from "@/auth";
 import { requireUser } from "./guards";
 import {
@@ -31,7 +30,6 @@ export async function completeStudentOnboardingAction(
         role: "STUDENT",
       },
     });
-    revalidatePath("/", "layout");
     return success({ studentId: student.id, username: student.username });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Gagal menyelesaikan onboarding.";
@@ -56,7 +54,6 @@ export async function completeUmkmOnboardingAction(
         role: "UMKM",
       },
     });
-    revalidatePath("/", "layout");
     return success({ umkmId: umkm.id });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Gagal menyelesaikan onboarding.";
@@ -76,4 +73,3 @@ export async function checkReferralCodeAction(
     return failure(message, (err as { code?: string }).code || "INVALID_REFERRAL");
   }
 }
-

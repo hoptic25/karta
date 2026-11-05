@@ -32,7 +32,7 @@ export default async function UmkmDashboardPage() {
   const umkm = await getUmkmProfileByUserId(session.user.id);
 
   if (!umkm) {
-    redirect("/onboarding/umkm");
+    throw new Error("Profil UMKM tidak ditemukan.");
   }
 
   const {

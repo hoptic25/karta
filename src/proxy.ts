@@ -41,6 +41,12 @@ export async function proxy(request: NextRequest) {
   // Not onboarded yet (no role)
   if (!role) {
     if (!isOnboardingRoute) {
+      if (isStudentRoute) {
+        return NextResponse.redirect(new URL("/onboarding/student", request.url));
+      }
+      if (isUmkmRoute) {
+        return NextResponse.redirect(new URL("/onboarding/umkm", request.url));
+      }
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
     return NextResponse.next();

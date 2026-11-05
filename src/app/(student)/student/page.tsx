@@ -23,13 +23,14 @@ export default async function StudentDashboardPage() {
   const student = await getStudentProfileByUserId(session.user.id);
 
   if (!student) {
-    redirect("/onboarding/student");
+    // role STUDENT tapi profil belum ada: jangan lempar ke onboarding (loop)
+    throw new Error("Profil mahasiswa tidak ditemukan.");
   }
 
   const summary = await getStudentDashboardSummary(student.id);
 
   if (!summary) {
-    redirect("/onboarding/student");
+    throw new Error("Ringkasan dashboard tidak tersedia.");
   }
 
   return (
