@@ -11,6 +11,12 @@ export const jobRolesEnum = [
 ] as const;
 
 export const studentOnboardingSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, "Nama minimal 2 karakter.")
+    .max(100, "Nama maksimal 100 karakter.")
+    .optional()
+    .or(z.literal("")),
   referralCode: z
     .string()
     .min(3, "Kode referral minimal 3 karakter.")

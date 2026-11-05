@@ -41,6 +41,7 @@ export function StudentOnboardingForm() {
   } = useForm<StudentOnboardingInput>({
     resolver: zodResolver(studentOnboardingSchema),
     defaultValues: {
+      fullName: "",
       referralCode: "",
       studyProgram: "",
       username: "",
@@ -203,6 +204,21 @@ export function StudentOnboardingForm() {
         </div>
 
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="fullName">Nama Lengkap / Nama Panggilan</Label>
+            <Input
+              id="fullName"
+              {...register("fullName")}
+              placeholder="Contoh: Karin"
+              className="mt-1.5"
+            />
+            {errors.fullName && (
+              <p className="text-xs text-destructive mt-1">
+                {errors.fullName.message}
+              </p>
+            )}
+          </div>
+
           <div>
             <Label htmlFor="studyProgram">Program Studi / Jurusan</Label>
             <Input

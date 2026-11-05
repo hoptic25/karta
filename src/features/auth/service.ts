@@ -88,10 +88,13 @@ export async function completeStudentOnboarding(
       include: { campus: true },
     });
 
-    // 4. Update User role
+    // 4. Update User role and name if provided
     await tx.user.update({
       where: { id: user.id },
-      data: { role: "STUDENT" },
+      data: {
+        role: "STUDENT",
+        ...(input.fullName?.trim() ? { name: input.fullName.trim() } : {}),
+      },
     });
 
     return student;

@@ -31,6 +31,9 @@ export function StudentDashboardView({ summary }: StudentDashboardViewProps) {
             <h1 className="font-heading text-2xl sm:text-3xl font-bold text-primary-brown">
               Halo, {student.name?.split(" ")[0] || student.username}! 👋
             </h1>
+            <span className="text-xs font-mono text-primary-brown/60">
+              @{student.username}
+            </span>
             <Badge className="bg-earth-primary text-white text-[10px] uppercase font-bold tracking-wider">
               {student.level}
             </Badge>
