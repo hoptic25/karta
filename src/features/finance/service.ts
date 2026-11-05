@@ -467,4 +467,70 @@ export async function updateStudentPortfolioSettings(
   });
 }
 
+/**
+ * Updates comprehensive student profile information (Full Name, Username, Study Program, Bio, Portfolio Visibility)
+ */
+export async function updateStudentProfile(
+  studentUserId: string,
+  input: {
+    name?: string;
+    username?: string;
+    studyProgram?: string;
+    bio?: string;
+    portfolioPublic?: boolean;
+  }
+) {
+  const student = await prisma.studentProfile.findUnique({
+    where: { userId: studentUserId },
+  });
+
+  if (!student) {
+    throw new FinanceError("Profil mahasiswa tidak ditemukan.", "STUDENT_NOT_FOUND");
+  }
+
+  // If username is changing, validate format and uniqueness
+  if (input.username && input.username.toLowerCase() !== student.username) {
+    const cleanUsername = input.username.toLowerCase().trim();
+    if (!/^[a-z0-9-]+$/.test(cleanUsername)) {
+      throw new FinanceError(
+        "Username hanya boleh terdiri dari huruf kecil, angka, dan tanda hubung (-). Tanpa spasi.",
+        "INVALID_USERNAME"
+      );
+    }
+    if (cleanUsername.length < 3 || cleanUsername.length > 30) {
+      throw new FinanceError("Username harus antara 3 hingga 30 karakter.", "INVALID_USERNAME_LENGTH");
+    }
+
+    const existing = await prisma.studentProfile.findUnique({
+      where: { username: cleanUsername },
+    });
+    if (existing && existing.id !== student.id) {
+      throw new FinanceError("Username tersebut sudah digunakan oleh mahasiswa lain.", "USERNAME_TAKEN");
+    }
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    // 1. Update user.name if provided
+    if (input.name && input.name.trim().length >= 2) {
+      await tx.user.update({
+        where: { id: studentUserId },
+        data: { name: input.name.trim() },
+      });
+    }
+
+    // 2. Update studentProfile
+    const updatedStudent = await tx.studentProfile.update({
+      where: { id: student.id },
+      data: {
+        ...(input.username ? { username: input.username.toLowerCase().trim() } : {}),
+        ...(input.studyProgram ? { studyProgram: input.studyProgram.trim() } : {}),
+        ...(input.bio !== undefined ? { bio: input.bio.trim() } : {}),
+        ...(input.portfolioPublic !== undefined ? { portfolioPublic: input.portfolioPublic } : {}),
+      },
+    });
+
+    return updatedStudent;
+  });
+}
+
 

@@ -14,6 +14,7 @@ import {
   Edit3,
   AlertCircle,
   Check,
+  User,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { maskBankAccount } from "@/lib/format";
 import {
   updateStudentPortfolioSettingsAction,
+  updateStudentProfileAction,
   updateBankDetailsAction,
 } from "../actions";
 import {
@@ -72,6 +74,14 @@ interface StudentProfileViewProps {
 
 export function StudentProfileView({ student }: StudentProfileViewProps) {
   const router = useRouter();
+
+  // Profile edit modal state
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [fullName, setFullName] = useState(student.user.name || "");
+  const [username, setUsername] = useState(student.username);
+  const [studyProgram, setStudyProgram] = useState(student.studyProgram);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Bio state
   const [bio, setBio] = useState(student.bio || "");
@@ -157,6 +167,57 @@ export function StudentProfileView({ student }: StudentProfileViewProps) {
     }
   };
 
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError(null);
+
+    const cleanName = fullName.trim();
+    const cleanUsername = username.toLowerCase().trim();
+    const cleanStudyProgram = studyProgram.trim();
+
+    if (!cleanName || cleanName.length < 2) {
+      setProfileError("Nama lengkap minimal 2 karakter.");
+      return;
+    }
+
+    if (!cleanUsername || cleanUsername.length < 3 || cleanUsername.length > 30) {
+      setProfileError("Username harus antara 3 hingga 30 karakter.");
+      return;
+    }
+
+    if (!/^[a-z0-9-]+$/.test(cleanUsername)) {
+      setProfileError("Username hanya boleh terdiri dari huruf kecil, angka, dan tanda hubung (-). Tanpa spasi.");
+      return;
+    }
+
+    if (!cleanStudyProgram) {
+      setProfileError("Program studi wajib diisi.");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const res = await updateStudentProfileAction({
+        name: cleanName,
+        username: cleanUsername,
+        studyProgram: cleanStudyProgram,
+        bio: bio.trim(),
+      });
+
+      if (!res.ok) {
+        setProfileError(res.error.message);
+        return;
+      }
+
+      setProfileModalOpen(false);
+      router.refresh();
+    } catch {
+      setProfileError("Gagal menyimpan profil.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
       {/* Title */}
@@ -203,6 +264,21 @@ export function StudentProfileView({ student }: StudentProfileViewProps) {
             </div>
 
             <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setFullName(student.user.name || "");
+                  setUsername(student.username);
+                  setStudyProgram(student.studyProgram);
+                  setProfileError(null);
+                  setProfileModalOpen(true);
+                }}
+                className="border-beige hover:bg-cream text-primary-brown text-xs font-semibold gap-1.5"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                Edit Profil
+              </Button>
               <Badge
                 variant="outline"
                 className={`${levelStyle.bg} ${levelStyle.text} border-transparent font-bold text-xs uppercase px-2.5 py-1`}
@@ -522,6 +598,107 @@ export function StudentProfileView({ student }: StudentProfileViewProps) {
                 className="bg-earth-primary hover:bg-earth-primary/90 text-white text-xs font-semibold"
               >
                 {isSavingBank ? "Menyimpan..." : "Simpan Rekening"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Modal */}
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
+        <DialogContent className="max-w-md bg-white border-beige">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg font-bold text-primary-brown flex items-center gap-2">
+              <User className="w-5 h-5 text-earth-primary" />
+              Edit Profil Mahasiswa
+            </DialogTitle>
+            <DialogDescription className="text-xs text-primary-brown/70">
+              Perbarui nama lengkap, username identitas publik, dan program studi Anda.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            {profileError && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{profileError}</span>
+              </div>
+            )}
+
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="profileFullName" className="text-xs font-semibold text-primary-brown">
+                  Nama Lengkap
+                </Label>
+                <Input
+                  id="profileFullName"
+                  type="text"
+                  placeholder="Contoh: Karin Renata Putri"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="text-xs"
+                  required
+                />
+                <p className="text-[11px] text-primary-brown/60">
+                  Boleh ada spasi. Ditampilkan pada sapaan dashboard dan sertifikat tugas.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="profileUsername" className="text-xs font-semibold text-primary-brown">
+                  Username Portofolio Publik
+                </Label>
+                <div className="flex items-center rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-xs focus-within:ring-1 focus-within:ring-ring">
+                  <span className="text-primary-brown/50 font-mono select-none">karta.id/s/</span>
+                  <input
+                    id="profileUsername"
+                    type="text"
+                    value={username}
+                    onChange={(e) =>
+                      setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
+                    }
+                    placeholder="karin-putri"
+                    className="flex-1 bg-transparent px-1 py-1 font-mono text-xs outline-none text-primary-brown"
+                    required
+                  />
+                </div>
+                <p className="text-[11px] text-primary-brown/60">
+                  Hanya huruf kecil, angka, dan tanda hubung (-). Tanpa spasi.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="profileStudyProgram" className="text-xs font-semibold text-primary-brown">
+                  Program Studi
+                </Label>
+                <Input
+                  id="profileStudyProgram"
+                  type="text"
+                  placeholder="Contoh: S1 Sistem Informasi"
+                  value={studyProgram}
+                  onChange={(e) => setStudyProgram(e.target.value)}
+                  className="text-xs"
+                  required
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setProfileModalOpen(false)}
+                disabled={isSavingProfile}
+                className="text-xs"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingProfile}
+                className="bg-earth-primary hover:bg-earth-primary/90 text-white text-xs font-semibold"
+              >
+                {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </DialogFooter>
           </form>

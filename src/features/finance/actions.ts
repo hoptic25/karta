@@ -8,6 +8,7 @@ import {
   updateBankDetails,
   processWithdrawalByAdmin,
   updateStudentPortfolioSettings,
+  updateStudentProfile,
 } from "./service";
 import {
   submitRatingFromUmkm,
@@ -140,5 +141,31 @@ export async function updateStudentPortfolioSettingsAction(input: {
     return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
   }
 }
+
+export async function updateStudentProfileAction(input: {
+  name?: string;
+  username?: string;
+  studyProgram?: string;
+  bio?: string;
+  portfolioPublic?: boolean;
+}): Promise<Result<{ success: boolean; username?: string }>> {
+  try {
+    const user = await requireRole("STUDENT");
+    const updated = await updateStudentProfile(user.id, input);
+
+    revalidatePath("/student");
+    revalidatePath("/student/profile");
+    revalidatePath("/student/earnings");
+    if (updated.username) {
+      revalidatePath(`/s/${updated.username}`);
+    }
+
+    return success({ success: true, username: updated.username });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Gagal memperbarui profil mahasiswa.";
+    return failure(message, (err as { code?: string }).code || "SERVER_ERROR");
+  }
+}
+
 
 
