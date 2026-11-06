@@ -66,10 +66,16 @@ export async function proxy(request: NextRequest) {
   }
 
   // Role mismatch protection
-  if (isStudentRoute && role !== "STUDENT" && role !== "ADMIN") {
+  if (isStudentRoute && role !== "STUDENT") {
+    if (role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
     return NextResponse.redirect(new URL("/umkm", request.url));
   }
-  if (isUmkmRoute && role !== "UMKM" && role !== "ADMIN") {
+  if (isUmkmRoute && role !== "UMKM") {
+    if (role === "ADMIN") {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
     return NextResponse.redirect(new URL("/student", request.url));
   }
   if (isAdminRoute && role !== "ADMIN") {

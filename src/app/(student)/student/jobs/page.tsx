@@ -24,7 +24,11 @@ export default async function StudentJobsPage({ searchParams }: StudentJobsPageP
     redirect("/login?as=student");
   }
 
-  if (session.user.role !== "STUDENT" && session.user.role !== "ADMIN") {
+  if (session.user.role === "ADMIN") {
+    redirect("/admin");
+  }
+
+  if (session.user.role !== "STUDENT") {
     redirect("/umkm");
   }
 

@@ -16,15 +16,18 @@ export default async function StudentDashboardPage() {
     redirect("/login?as=student");
   }
 
-  if (session.user.role !== "STUDENT" && session.user.role !== "ADMIN") {
+  if (session.user.role === "ADMIN") {
+    redirect("/admin");
+  }
+
+  if (session.user.role !== "STUDENT") {
     redirect("/umkm");
   }
 
   const student = await getStudentProfileByUserId(session.user.id);
 
   if (!student) {
-    // role STUDENT tapi profil belum ada: jangan lempar ke onboarding (loop)
-    throw new Error("Profil mahasiswa tidak ditemukan.");
+    redirect("/onboarding/student");
   }
 
   const summary = await getStudentDashboardSummary(student.id);

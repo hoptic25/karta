@@ -17,12 +17,16 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "KARTA — Campus-Based Micro Job Marketplace",
+  title: {
+    default: "Karta — Marketplace Tugas Mikro Kampus & UMKM",
+    template: "%s | Karta",
+  },
   description:
     "Menghubungkan UMKM dengan mahasiswa kampus mitra untuk menyelesaikan tugas mikro berkualitas, membangun reputasi terverifikasi dan dampak nyata.",
   icons: {
-    icon: "/logo/karta.webp",
-    apple: "/logo/karta.webp",
+    icon: "/logo/karta.png",
+    shortcut: "/logo/karta.png",
+    apple: "/logo/karta.png",
   },
 };
 
