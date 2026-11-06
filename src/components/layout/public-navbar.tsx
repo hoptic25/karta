@@ -89,7 +89,7 @@ export async function PublicNavbar() {
                   Masuk
                 </Button>
               </Link>
-              <Link href="/login?as=student">
+              <Link href="/register">
                 <Button size="sm" className="font-semibold text-xs h-9 px-4">
                   Daftar
                 </Button>

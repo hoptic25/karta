@@ -3,15 +3,15 @@ import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-bu
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { Sparkles, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ as?: string; callbackUrl?: string }>;
+  searchParams: Promise<{ as?: string; callbackUrl?: string; email?: string }>;
 }) {
   const session = await auth();
-  const { as, callbackUrl } = await searchParams;
+  const { as, callbackUrl, email } = await searchParams;
 
   // If already logged in with role, redirect to appropriate dashboard
   if (session?.user?.role) {
@@ -40,6 +40,19 @@ export default async function LoginPage({
 
         {/* Card */}
         <div className="border border-beige bg-white p-8 rounded-lg space-y-6 shadow-xs">
+          {/* Notification if redirected from registration */}
+          {email && (
+            <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+              <ShieldCheck className="size-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-950">Email Terdaftar Ditemukan</p>
+                <p className="mt-0.5 text-amber-800 leading-relaxed font-sans">
+                  Email <strong className="font-mono">{email}</strong> sudah memiliki akun Karta. Silakan klik tombol di bawah untuk langsung masuk.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Header Title */}
           <div className="border-b border-beige pb-4 text-center">
             <h1 className="font-heading text-2xl font-semibold text-primary-brown">
@@ -66,25 +79,15 @@ export default async function LoginPage({
             />
           </div>
 
-          {/* Info note */}
-          <div className="pt-2 text-xs text-primary-brown/75 leading-relaxed font-sans border-t border-beige space-y-2">
-            <p className="font-semibold text-primary-brown text-[11px] uppercase tracking-wider">
-              Bagaimana cara kerja akun Karta?
-            </p>
-            <div className="space-y-2 text-[11px] text-primary-brown/80">
-              <div className="flex items-start gap-2">
-                <Sparkles className="size-3.5 text-earth-primary shrink-0 mt-0.5" />
-                <span>
-                  <strong>Pengguna Baru:</strong> Setelah login Google, Anda akan otomatis dipandu untuk memilih peran (Mahasiswa atau Pemilik UMKM).
-                </span>
-              </div>
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="size-3.5 text-earth-sage shrink-0 mt-0.5" />
-                <span>
-                  <strong>Pengguna Terdaftar:</strong> Sistem langsung mengenali akun Anda dan membukakan dashboard sesuai peran yang tersimpan.
-                </span>
-              </div>
-            </div>
+          {/* Registration link */}
+          <div className="text-center pt-2 text-xs text-primary-brown/70 font-sans border-t border-beige">
+            Belum memiliki akun Karta?{" "}
+            <Link
+              href="/register"
+              className="font-bold text-earth-primary hover:underline underline-offset-2"
+            >
+              Daftar akun baru di sini
+            </Link>
           </div>
         </div>
 
