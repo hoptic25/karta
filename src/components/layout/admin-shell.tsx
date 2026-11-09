@@ -42,6 +42,7 @@ export async function AdminShell({ children, activePath }: AdminShellProps) {
     { label: "Pengguna", href: "/admin/users", icon: Users },
     { label: "Kampus Mitra", href: "/admin/campuses", icon: GraduationCap },
     { label: "Kode Referral", href: "/admin/referrals", icon: KeyRound },
+    { label: "Jenis Pekerjaan", href: "/admin/job-roles", icon: Briefcase },
     { label: "Moderasi Pekerjaan", href: "/admin/jobs", icon: Briefcase },
     { label: "Penarikan Mahasiswa", href: "/admin/withdrawals", icon: Wallet },
     { label: "Sengketa & Laporan", href: "/admin/disputes", icon: AlertTriangle },

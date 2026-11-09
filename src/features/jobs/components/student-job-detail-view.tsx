@@ -12,6 +12,7 @@ import type {
   AcceptanceCriterion,
   ImageAsset,
   StudentProfile,
+  JobRole,
 } from "@/generated/prisma/client";
 import {
   Clock,
@@ -118,7 +119,7 @@ export function StudentJobDetailView({
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-beige pb-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md bg-earth-cream px-2.5 py-1 text-xs font-bold text-earth-coffee border border-earth-sand/30">
-              {job.role}
+              {job.jobRoleId}
             </span>
             {job.packageTier && (
               <span className="rounded-md bg-cream border border-beige px-2.5 py-1 text-xs font-semibold text-primary-brown">

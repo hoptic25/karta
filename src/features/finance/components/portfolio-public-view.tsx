@@ -162,13 +162,13 @@ export function PortfolioPublicView({ data }: PortfolioPublicViewProps) {
                   Peran & Keahlian Terverifikasi
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {student.roles.map((role) => (
+                  {student.jobRoleIds.map((roleId: string) => (
                     <Badge
-                      key={role}
+                      key={roleId}
                       variant="outline"
                       className="bg-cream text-earth-primary border-earth-primary/30 text-[11px]"
                     >
-                      {role.replace(/_/g, " ")}
+                      {roleId}
                     </Badge>
                   ))}
                   {student.skills.map((skill) => (
@@ -222,7 +222,7 @@ export function PortfolioPublicView({ data }: PortfolioPublicViewProps) {
                             variant="outline"
                             className="bg-cream text-earth-primary border-earth-primary/30 text-[10px] uppercase font-bold"
                           >
-                            {job.role.replace(/_/g, " ")}
+                            {job.roleKey.replace(/_/g, " ")}
                           </Badge>
                           {!job.isPaid && (
                             <Badge

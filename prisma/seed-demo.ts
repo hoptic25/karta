@@ -2,7 +2,6 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
-  JobRole,
   StudentLevel,
   LedgerType,
   LedgerStatus,
@@ -16,6 +15,18 @@ if (!connectionString) {
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
+
+// Ambil id JobRole dari tabel berdasarkan key (di-seed oleh prisma/seed.ts)
+async function getRoleIds(keys: string[]): Promise<string[]> {
+  const roles = await prisma.jobRole.findMany({ where: { key: { in: keys } } });
+  const missing = keys.filter((k) => !roles.find((r) => r.key === k));
+  if (missing.length > 0) {
+    throw new Error(
+      `JobRole belum ada: ${missing.join(", ")}. Jalankan pnpm db:seed terlebih dahulu.`
+    );
+  }
+  return keys.map((k) => roles.find((r) => r.key === k)!.id);
+}
 
 async function main() {
   console.log("🚀 Starting demo dataset seed...");
@@ -40,6 +51,17 @@ async function main() {
     throw new Error("Base seed must run first! Please run pnpm db:seed first.");
   }
 
+  // Job roles (dari tabel JobRole)
+  const [roleFrontendId, roleUiuxId, roleGraphicId] = await getRoleIds([
+    "FRONTEND_DEV",
+    "UIUX_DESIGNER",
+    "GRAPHIC_DESIGNER",
+  ]);
+  const [roleContentId, roleSocialId] = await getRoleIds([
+    "CONTENT_WRITER",
+    "SOCIAL_MEDIA",
+  ]);
+
   // 3. Demo Students
   const student1User = await prisma.user.upsert({
     where: { email: "budi.santoso@mahasiswa.itb.ac.id" },
@@ -52,16 +74,20 @@ async function main() {
     },
   });
 
+  const student1RoleIds = [roleFrontendId, roleUiuxId, roleGraphicId];
   const studentProfile1 = await prisma.studentProfile.upsert({
     where: { userId: student1User.id },
     update: {},
     create: {
       userId: student1User.id,
+      fullName: "Budi Santoso",
       campusId: itb.id,
       studyProgram: "Teknik Informatika",
       username: "budisantoso",
       bio: "Frontend Developer & UI Designer antusias. Suka membantu UMKM membangun kehadiran digital.",
       skills: ["Figma", "React", "Next.js", "Tailwind CSS"],
+      jobRoleIds: student1RoleIds,
+      jobRoles: { connect: student1RoleIds.map((id) => ({ id })) },
       points: 175,
       level: StudentLevel.TRUSTED,
       bankName: "BCA",
@@ -82,16 +108,20 @@ async function main() {
     },
   });
 
+  const student2RoleIds = [roleContentId, roleSocialId];
   const studentProfile2 = await prisma.studentProfile.upsert({
     where: { userId: student2User.id },
     update: {},
     create: {
       userId: student2User.id,
+      fullName: "Siti Rahma",
       campusId: ugm.id,
       studyProgram: "Ilmu Komunikasi",
       username: "sitirahma",
       bio: "Content Writer dan Social Media Enthusiast. Berpengalaman riset konten viral Instagram & TikTok.",
       skills: ["Copywriting", "Canva", "Social Media", "SEO"],
+      jobRoleIds: student2RoleIds,
+      jobRoles: { connect: student2RoleIds.map((id) => ({ id })) },
       points: 85,
       level: StudentLevel.RELIABLE,
       bankName: "Mandiri",
@@ -209,7 +239,7 @@ async function main() {
       title: "Desain Banner Promosi Menu Baru Instagram",
       description: "Membuat desain banner promosi untuk menu kopi susu aren baru berformat 1:1 dan 9:16.",
       instructions: "Gunakan palet warna earthy tones, sertakan foto produk kopi terlampir, dan logo kedai.",
-      role: JobRole.GRAPHIC_DESIGNER,
+      jobRoleId: roleGraphicId,
       deliverableType: "CANVA",
       deadlineAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       status: "ACCEPTED",
@@ -329,7 +359,7 @@ async function main() {
       title: "Penulisan 5 Artikel Pendek Cerita Filosofi Motif Batik",
       description: "Menulis 5 artikel pendek (masing-masing 200-300 kata) tentang filosofi motif batik klasik untuk blog & caption media sosial.",
       instructions: "Gunakan bahasa Indonesia baku yang mengalir, edukatif, dan menarik bagi generasi muda.",
-      role: JobRole.CONTENT_WRITER,
+      jobRoleId: roleContentId,
       deliverableType: "DOCS",
       deadlineAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
       status: "OPEN",
@@ -360,7 +390,7 @@ async function main() {
       title: "Riset Tren TikTok & Kalender Konten 1 Minggu",
       description: "Menyusun tabel ide konten harian TikTok untuk kedai kopi artisan.",
       instructions: "Sertakan audio tren, konsep visual, dan hook 3 detik pertama.",
-      role: JobRole.SOCIAL_MEDIA,
+      jobRoleId: roleSocialId,
       deliverableType: "DOCS",
       deadlineAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
       status: "SUBMITTED",

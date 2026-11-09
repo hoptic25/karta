@@ -1,15 +1,16 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
 import { StudentShell } from "@/components/layout/student-shell";
 import {
   getStudentDiscoveryJobs,
   DiscoveryClientView,
 } from "@/features/jobs";
-import type { JobRole } from "@/generated/prisma/client";
 
 interface StudentJobsPageProps {
   searchParams: Promise<{
-    role?: JobRole | "ALL";
+    roleKey?: string | "ALL";
     type?: "ALL" | "PAID" | "UNPAID";
     search?: string;
     sort?: "RECOMMENDED" | "LATEST" | "DEADLINE" | "REWARD";
@@ -36,7 +37,7 @@ export default async function StudentJobsPage({ searchParams }: StudentJobsPageP
   const page = params.page ? parseInt(params.page, 10) : 1;
 
   const discoveryData = await getStudentDiscoveryJobs(session.user.id, {
-    role: params.role,
+    roleKey: params.roleKey,
     type: params.type,
     search: params.search,
     sort: params.sort,
@@ -48,15 +49,22 @@ export default async function StudentJobsPage({ searchParams }: StudentJobsPageP
     redirect("/onboarding/student");
   }
 
+  // Get the JobRole objects for display
+  const studentRoles = await prisma.jobRole.findMany({
+    where: { id: { in: discoveryData.student.jobRoleIds } },
+  });
+
   return (
     <StudentShell activePath="/student/jobs">
-      <DiscoveryClientView
-        initialJobs={discoveryData.jobs}
-        studentRoles={discoveryData.student.roles}
-        pagination={discoveryData.pagination}
-        activeAssignmentsCount={discoveryData.activeAssignmentsCount}
-        activeUnpaidCount={discoveryData.activeUnpaidCount}
-      />
+      <Suspense fallback={<div className="p-8 text-center text-primary-brown/60">Memuat...</div>}>
+        <DiscoveryClientView
+          initialJobs={discoveryData.jobs}
+          studentRoles={studentRoles}
+          pagination={discoveryData.pagination}
+          activeAssignmentsCount={discoveryData.activeAssignmentsCount}
+          activeUnpaidCount={discoveryData.activeUnpaidCount}
+        />
+      </Suspense>
     </StudentShell>
   );
 }

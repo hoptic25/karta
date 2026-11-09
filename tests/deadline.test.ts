@@ -95,7 +95,8 @@ describe("Job Deadline Rules (PRD §15.2 & BR-J3, BR-J5)", () => {
       const deadlineAt = new Date("2026-11-10T00:00:00Z");
       const job = {
         deadlineAt,
-        role: "DATA_ENTRY" as const,
+        jobRoleId: "role-data-entry",
+        jobRole: { key: "DATA_ENTRY" },
         packageTier: "BASIC" as const,
       };
 

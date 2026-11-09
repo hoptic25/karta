@@ -30,6 +30,7 @@ import type {
   DeadlineChangeRequest,
   Dispute,
   FailureReport,
+  JobRole,
 } from "@/generated/prisma/client";
 import {
   Send,
@@ -49,6 +50,7 @@ import {
 } from "lucide-react";
 
 type JobDetailData = Job & {
+  jobRole: JobRole | null;
   criteria: AcceptanceCriterion[];
   images: ImageAsset[];
   subscription: (Subscription & { package: Package }) | null;
@@ -232,7 +234,7 @@ export function JobDetailView({
               {job.status}
             </span>
             <span className="rounded-md bg-earth-cream px-2.5 py-1 text-xs font-semibold text-earth-coffee border border-earth-sand/30">
-              {job.role}
+              {job.jobRole?.label || job.jobRole?.key || "Unknown"}
             </span>
             {job.isPaid ? (
               <span className="text-xs font-bold text-earth-primary bg-earth-sage/10 px-2.5 py-1 rounded-md border border-earth-sage/30">

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { JobRole, PackageTier } from "@/generated/prisma/client";
+import type { PackageTier } from "@/generated/prisma/client";
 
 export class DeadlineError extends Error {
   code: string;
@@ -14,7 +14,7 @@ export class DeadlineError extends Error {
  * Default fallback matrix per PRD §15.2:
  * FREE tier memakai nilai BASIC (BR-J3).
  */
-export const DEFAULT_DEADLINE_RULES: Record<JobRole, Record<"BASIC" | "PROFESSIONAL" | "PREMIUM", number>> = {
+export const DEFAULT_DEADLINE_RULES: Record<string, Record<"BASIC" | "PROFESSIONAL" | "PREMIUM", number>> = {
   DATA_ENTRY: { BASIC: 48, PROFESSIONAL: 36, PREMIUM: 24 },
   CONTENT_WRITER: { BASIC: 72, PROFESSIONAL: 48, PREMIUM: 36 },
   GRAPHIC_DESIGNER: { BASIC: 72, PROFESSIONAL: 48, PREMIUM: 36 },
@@ -36,14 +36,14 @@ export function normalizeTierForDeadline(tier: PackageTier): "BASIC" | "PROFESSI
  * Mendapatkan minimum jam pengerjaan untuk role dan tier tertentu.
  * Mencoba query DB `DeadlineRule`, dan fallback ke tabel PRD §15.2.
  */
-export async function getMinDeadlineHours(role: JobRole, tier: PackageTier): Promise<number> {
+export async function getMinDeadlineHours(roleKey: string, tier: PackageTier): Promise<number> {
   const effectiveTier = normalizeTierForDeadline(tier);
 
   try {
     const rule = await prisma.deadlineRule.findUnique({
       where: {
-        role_tier: {
-          role,
+        jobRoleId_tier: {
+          jobRoleId: roleKey,
           tier: effectiveTier,
         },
       },
@@ -56,15 +56,15 @@ export async function getMinDeadlineHours(role: JobRole, tier: PackageTier): Pro
     // Database fallback
   }
 
-  return DEFAULT_DEADLINE_RULES[role]?.[effectiveTier] ?? 48;
+  return DEFAULT_DEADLINE_RULES[roleKey]?.[effectiveTier] ?? 48;
 }
 
 /**
  * Sinkron get min hours dari default fallback matrix (cocok untuk client / validasi cepat).
  */
-export function getMinDeadlineHoursSync(role: JobRole, tier: PackageTier): number {
+export function getMinDeadlineHoursSync(roleKey: string, tier: PackageTier): number {
   const effectiveTier = normalizeTierForDeadline(tier);
-  return DEFAULT_DEADLINE_RULES[role]?.[effectiveTier] ?? 48;
+  return DEFAULT_DEADLINE_RULES[roleKey]?.[effectiveTier] ?? 48;
 }
 
 export const getMinimumDeadlineHours = getMinDeadlineHoursSync;
@@ -74,17 +74,31 @@ export const getMinimumDeadlineHours = getMinDeadlineHoursSync;
  * deadlineAt >= baseTime + minHours.
  */
 export async function assertValidDeadline(
-  role: JobRole,
+  jobRoleId: string,
   tier: PackageTier,
   deadlineAt: Date,
   baseTime: Date = new Date()
 ): Promise<number> {
-  const minHours = await getMinDeadlineHours(role, tier);
+  // Get the roleKey from jobRoleId
+  let roleKey = jobRoleId;
+  try {
+    const jobRole = await prisma.jobRole.findUnique({
+      where: { id: jobRoleId },
+      select: { key: true },
+    });
+    if (jobRole?.key) {
+      roleKey = jobRole.key;
+    }
+  } catch {
+    // Fallback to jobRoleId directly if DB is unavailable or if roleKey is passed directly
+  }
+
+  const minHours = await getMinDeadlineHours(roleKey, tier);
   const minRequiredTime = new Date(baseTime.getTime() + minHours * 60 * 60 * 1000);
 
   if (deadlineAt.getTime() < minRequiredTime.getTime()) {
     throw new DeadlineError(
-      `Tenggat waktu terlalu dekat. Untuk peran ${role} dan paket ${tier}, tenggat minimum adalah ${minHours} jam sejak publikasi (minimal ${minRequiredTime.toLocaleString("id-ID")}).`,
+      `Tenggat waktu terlalu dekat. Untuk peran ${roleKey} dan paket ${tier}, tenggat minimum adalah ${minHours} jam sejak publikasi (minimal ${minRequiredTime.toLocaleString("id-ID")}).`,
       "DEADLINE_TOO_SHORT"
     );
   }
@@ -98,10 +112,10 @@ export async function assertValidDeadline(
  */
 export function getClaimCutoffTime(
   deadlineAt: Date,
-  role: JobRole,
+  roleKey: string,
   tier: PackageTier
 ): Date {
-  const minHours = getMinDeadlineHoursSync(role, tier);
+  const minHours = getMinDeadlineHoursSync(roleKey, tier);
   return new Date(deadlineAt.getTime() - minHours * 60 * 60 * 1000);
 }
 
@@ -111,13 +125,15 @@ export function getClaimCutoffTime(
 export function isJobClaimableByDeadline(
   job: {
     deadlineAt: Date;
-    role: JobRole;
+    jobRoleId: string;
+    jobRole?: { key: string } | null;
     packageTier: PackageTier | null;
   },
   now: Date = new Date()
 ): boolean {
   const tier = job.packageTier || "BASIC";
-  const cutoff = getClaimCutoffTime(job.deadlineAt, job.role, tier);
+  const roleKey = job.jobRole?.key || "DATA_ENTRY";
+  const cutoff = getClaimCutoffTime(job.deadlineAt, roleKey, tier);
   return now.getTime() <= cutoff.getTime();
 }
 

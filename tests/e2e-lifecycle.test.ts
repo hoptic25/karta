@@ -74,8 +74,9 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
       userId: "user-student-1",
       campusId: "campus-1",
       username: "budisantoso",
+      fullName: "Budi Santoso",
       studyProgram: "Ilmu Komputer",
-      roles: ["GRAPHIC_DESIGNER"],
+      jobRoleIds: ["role-1"],
       bio: "Graphic designer",
       avatarUrl: null,
       skills: ["Canva", "Photoshop"],
@@ -94,7 +95,7 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
     const mockJob: Pick<
       Job,
       | "id"
-      | "role"
+      | "jobRoleId"
       | "status"
       | "isHidden"
       | "isPaid"
@@ -105,7 +106,7 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
       | "newcomerLaneUntil"
     > = {
       id: "job-1",
-      role: "GRAPHIC_DESIGNER",
+      jobRoleId: "role-1",
       status: "OPEN",
       isHidden: false,
       isPaid: true,
@@ -219,18 +220,20 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
       await expect(
         completeStudentOnboarding("user-std", {
           username: "studentbaru",
+          fullName: "Student Baru",
           referralCode: "ITB123",
           studyProgram: "Informatika",
-          roles: ["GRAPHIC_DESIGNER"],
+          jobRoleIds: ["role-1"],
         })
       ).rejects.toThrow(OnboardingError);
 
       await expect(
         completeStudentOnboarding("user-std", {
           username: "studentbaru",
+          fullName: "Student Baru",
           referralCode: "ITB123",
           studyProgram: "Informatika",
-          roles: ["GRAPHIC_DESIGNER"],
+          jobRoleIds: ["role-1"],
         })
       ).rejects.toThrow("mewajibkan penggunaan akun Google dengan email institusi (.ac.id)");
     });
@@ -271,9 +274,10 @@ describe("E2E Marketplace Lifecycle Test (PRD §16 P1 Happy Path)", () => {
 
       const res = await completeStudentOnboarding("user-itb", {
         username: "mahasiswaitb",
+        fullName: "Mahasiswa ITB",
         referralCode: "ITB123",
         studyProgram: "Teknik Informatika",
-        roles: ["GRAPHIC_DESIGNER"],
+        jobRoleIds: ["role-1"],
       });
 
       expect(res).toBeDefined();

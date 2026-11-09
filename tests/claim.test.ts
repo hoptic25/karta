@@ -13,12 +13,13 @@ describe("Job Claim Rules & Eligibility (BR-C1, BR-C4, BR-C5, BR-J5)", () => {
     id: "student-1",
     userId: "user-1",
     username: "budi",
+    fullName: "Budi Santoso",
     campusId: "campus-1",
     studyProgram: "Informatika",
     bio: null,
     avatarUrl: null,
     skills: ["Excel", "Figma"],
-    roles: ["DATA_ENTRY", "GRAPHIC_DESIGNER"],
+    jobRoleIds: ["role-data-entry", "role-graphic-designer"],
     points: 10,
     level: "NEWCOMER",
     ratingAvg: 0,
@@ -39,7 +40,7 @@ describe("Job Claim Rules & Eligibility (BR-C1, BR-C4, BR-C5, BR-J5)", () => {
     title: "Data Entry Toko",
     description: "Input produk toko online ke spreadsheet",
     instructions: "Gunakan template yang tersedia",
-    role: "DATA_ENTRY",
+    jobRoleId: "role-data-entry",
     deliverableType: "DRIVE",
     deadlineAt: new Date(baseNow.getTime() + 60 * 60 * 60 * 1000), // 60 jam (min 48 jam)
     minLevel: "NEWCOMER",
@@ -94,11 +95,11 @@ describe("Job Claim Rules & Eligibility (BR-C1, BR-C4, BR-C5, BR-J5)", () => {
     });
 
     it("should reject claim when job role is not in student roles", () => {
-      const student = mockStudent({ roles: ["CONTENT_WRITER"] });
-      const job = mockJob({ role: "DATA_ENTRY" });
+      const student = mockStudent({ jobRoleIds: ["role-content-writer"] });
+      const job = mockJob({ jobRoleId: "role-data-entry" });
       const res = checkClaimEligibility(student, job, 0, 0, baseNow);
       expect(res.eligible).toBe(false);
-      expect(res.reason).toContain("belum terdaftar");
+      expect(res.reason).toContain("keahlian");
     });
 
     it("should reject claim when student level is below job minLevel", () => {

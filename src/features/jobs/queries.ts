@@ -33,6 +33,7 @@ export async function getUmkmJobs(
   return await prisma.job.findMany({
     where,
     include: {
+      jobRole: true,
       criteria: { orderBy: { position: "asc" } },
       subscription: { include: { package: true } },
       assignments: {
@@ -64,6 +65,7 @@ export async function getUmkmJobDetail(jobId: string, umkmId: string) {
       umkmId,
     },
     include: {
+      jobRole: true,
       criteria: { orderBy: { position: "asc" } },
       images: true,
       subscription: { include: { package: true } },
@@ -106,6 +108,7 @@ export async function getJobForEdit(jobId: string, umkmId: string) {
       umkmId,
     },
     include: {
+      jobRole: true,
       criteria: { orderBy: { position: "asc" } },
       images: true,
     },
@@ -116,10 +119,10 @@ export async function getJobForEdit(jobId: string, umkmId: string) {
 import { isJobClaimableByDeadline, getClaimCutoffTime } from "./deadline";
 import { rankJobs } from "./ranking";
 import { checkClaimEligibility } from "./claim";
-import type { JobRole } from "@/generated/prisma/client";
+import type { JobRoleEnum } from "@/generated/prisma/client";
 
 export interface DiscoveryFilterOptions {
-  role?: JobRole | "ALL";
+  roleKey?: string | "ALL";
   type?: "ALL" | "PAID" | "UNPAID";
   search?: string;
   sort?: "RECOMMENDED" | "LATEST" | "DEADLINE" | "REWARD";
@@ -162,8 +165,15 @@ export async function getStudentDiscoveryJobs(
     isHidden: false,
   };
 
-  if (options?.role && options.role !== "ALL") {
-    where.role = options.role;
+  if (options?.roleKey && options.roleKey !== "ALL") {
+    // Find JobRole by key to get the ID
+    const jobRole = await prisma.jobRole.findUnique({
+      where: { key: options.roleKey },
+      select: { id: true },
+    });
+    if (jobRole) {
+      where.jobRoleId = jobRole.id;
+    }
   }
 
   if (options?.type === "PAID") {
@@ -183,6 +193,9 @@ export async function getStudentDiscoveryJobs(
   const rawJobs = await prisma.job.findMany({
     where,
     include: {
+      jobRole: {
+        select: { id: true, key: true, label: true },
+      },
       umkm: {
         select: {
           id: true,
@@ -218,9 +231,12 @@ export async function getStudentDiscoveryJobs(
       activeUnpaidCount,
       now
     );
+
+    // Use jobRole key for cutoff time calculation
+    const roleKey = job.jobRole?.key || "DATA_ENTRY";
     const cutoffAt = getClaimCutoffTime(
       job.deadlineAt,
-      job.role,
+      roleKey,
       job.packageTier || "BASIC"
     );
 
@@ -236,7 +252,25 @@ export async function getStudentDiscoveryJobs(
   let sortedJobs = enrichedJobs;
 
   if (sortMode === "RECOMMENDED") {
-    sortedJobs = rankJobs(enrichedJobs, student.roles, now);
+    // Get role keys from student's job roles for ranking
+    const studentJobRoles = await prisma.jobRole.findMany({
+      where: { id: { in: student.jobRoleIds } },
+      select: { key: true },
+    });
+    const roleKeys = studentJobRoles.map((r) => r.key);
+    
+    // Map enrichedJobs to RankableJob format for ranking
+    const rankableJobs = enrichedJobs.map(j => ({
+      id: j.id,
+      roleKey: j.jobRole?.key,
+      packageTier: j.packageTier,
+      deadlineAt: j.deadlineAt,
+      publishedAt: j.publishedAt,
+      createdAt: j.createdAt,
+    }));
+    
+    const rankedJobs = rankJobs(rankableJobs, roleKeys, now);
+    sortedJobs = rankedJobs.map(r => enrichedJobs.find(j => j.id === r.id)!);
   } else if (sortMode === "LATEST") {
     sortedJobs.sort((a, b) => {
       const aTime = (a.publishedAt || a.createdAt).getTime();
@@ -287,6 +321,7 @@ export async function getJobDetailForStudent(jobId: string, studentUserId: strin
       isHidden: false,
     },
     include: {
+      jobRole: true,
       umkm: {
         include: {
           partnerCampus: { select: { name: true, city: true } },
@@ -323,7 +358,7 @@ export async function getJobDetailForStudent(jobId: string, studentUserId: strin
 
   const claimCutoffAt = getClaimCutoffTime(
     job.deadlineAt,
-    job.role,
+    job.jobRole?.key || "DATA_ENTRY",
     job.packageTier || "BASIC"
   );
 
@@ -425,6 +460,7 @@ export async function getStudentJobWorkspace(jobId: string, studentId: string) {
     include: {
       job: {
         include: {
+          jobRole: true,
           umkm: {
             select: {
               id: true,
@@ -559,7 +595,7 @@ export async function getStudentDashboardSummary(studentId: string) {
     id: a.id,
     jobId: a.job.id,
     title: a.job.title,
-    role: a.job.role,
+    roleId: a.job.jobRoleId,
     isPaid: a.job.isPaid,
     studentShareIdr: a.job.studentShareIdr,
     status: a.job.status,
@@ -587,8 +623,8 @@ export async function getStudentDashboardSummary(studentId: string) {
     where: {
       status: "OPEN",
       isHidden: false,
-      role: {
-        in: student.roles,
+      jobRoleId: {
+        in: student.jobRoleIds,
       },
       deadlineAt: {
         gt: new Date(),
@@ -601,6 +637,11 @@ export async function getStudentDashboardSummary(studentId: string) {
           logoUrl: true,
         },
       },
+      jobRole: {
+        select: {
+          key: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -611,7 +652,7 @@ export async function getStudentDashboardSummary(studentId: string) {
   const recommendedJobs = recommendedJobsData.map((j) => ({
     id: j.id,
     title: j.title,
-    role: j.role,
+    roleKey: j.jobRole?.key || "DATA_ENTRY",
     isPaid: j.isPaid,
     studentShareIdr: j.studentShareIdr,
     deadlineAt: j.deadlineAt,
@@ -632,7 +673,7 @@ export async function getStudentDashboardSummary(studentId: string) {
       points: student.points,
       completedJobs: student.completedJobs,
       ratingAvg: student.ratingAvg,
-      roles: student.roles,
+      jobRoleIds: student.jobRoleIds,
       nextLevel: {
         name: nextLevelName,
         targetPoints,
@@ -671,6 +712,7 @@ export async function getUmkmDashboardSummary(umkmId: string) {
         status: "SUBMITTED",
       },
       include: {
+        jobRole: true,
         assignments: {
           where: { status: "ACTIVE" },
           include: {
@@ -715,7 +757,7 @@ export async function getUmkmDashboardSummary(umkmId: string) {
       return {
         id: j.id,
         title: j.title,
-        role: j.role,
+        roleKey: j.jobRole?.key || "UNKNOWN",
         isPaid: j.isPaid,
         reviewDueAt: j.reviewDueAt,
         studentName: activeAssignment?.student.user.name || "Mahasiswa Mitra",

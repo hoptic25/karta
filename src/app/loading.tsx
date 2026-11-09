@@ -6,7 +6,7 @@ export default function RootLoading() {
       <div className="relative flex items-center justify-center">
         <div className="w-14 h-14 border-3 border-beige border-t-earth-primary rounded-full animate-spin" />
         <Image
-          src="/logo/karta.webp"
+          src="/logo/Logo-Brown-preview.webp"
           alt="Logo KARTA"
           width={32}
           height={32}

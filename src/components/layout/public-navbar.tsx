@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { auth } from "@/auth";
 import { BrandLogo } from "@/components/layout/brand-logo";
-import { ArrowRight, LogIn } from "lucide-react";
+import { ArrowRight, LogIn, ChevronDown, GraduationCap, Briefcase } from "lucide-react";
 
 export async function PublicNavbar() {
   const session = await auth();
@@ -89,11 +95,34 @@ export async function PublicNavbar() {
                   Masuk
                 </Button>
               </Link>
-              <Link href="/register">
-                <Button size="sm" className="font-semibold text-xs h-9 px-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={<Button size="sm" className="font-semibold text-xs h-9 px-4" />}
+                >
                   Daftar
-                </Button>
-              </Link>
+                  <ChevronDown className="size-3.5 ml-1" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <Link href="/register/student">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <GraduationCap className="size-4 mr-2 text-earth-sage" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs">Daftar sebagai Mahasiswa</span>
+                        <span className="text-[10px] text-muted-foreground">Kerjakan tugas mikro</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/register/umkm">
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Briefcase className="size-4 mr-2 text-primary-brown" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs">Daftar sebagai UMKM</span>
+                        <span className="text-[10px] text-muted-foreground">Publikasikan pekerjaan</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </Link>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>

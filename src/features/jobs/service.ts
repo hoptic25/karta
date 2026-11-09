@@ -146,7 +146,7 @@ export async function publishJob(
   const pkg = sub.package;
 
   // Validasi tenggat minimum (BR-J3)
-  await assertValidDeadline(job.role, pkg.tier, job.deadlineAt, now);
+  await assertValidDeadline(job.jobRoleId, pkg.tier, job.deadlineAt, now);
 
   // Ambil studentSharePct dari PlatformConfig bila ada (default: 60)
   let studentSharePct = 60;
@@ -228,7 +228,7 @@ export async function updateOpenJob(
 
   // Validasi deadline baru terhadap tanggal publikasi awal (atau saat ini)
   const baseTime = job.publishedAt || new Date();
-  await assertValidDeadline(job.role, effectiveTier, contentData.deadlineAt, baseTime);
+  await assertValidDeadline(job.jobRoleId, effectiveTier, contentData.deadlineAt, baseTime);
 
   return await prisma.$transaction(async (tx) => {
     await tx.acceptanceCriterion.deleteMany({
@@ -375,7 +375,7 @@ export async function duplicateJob(jobId: string, umkmId: string): Promise<Job> 
         title: `(Salinan) ${original.title}`.slice(0, 120),
         description: original.description,
         instructions: original.instructions,
-        role: original.role,
+        jobRoleId: original.jobRoleId,
         deliverableType: original.deliverableType,
         deadlineAt: defaultDeadline,
         minLevel: original.minLevel,

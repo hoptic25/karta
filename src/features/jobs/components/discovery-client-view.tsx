@@ -27,15 +27,15 @@ interface DiscoveryClientViewProps {
   activeUnpaidCount: number;
 }
 
-const ROLE_OPTIONS: { value: JobRole | "ALL"; label: string }[] = [
+const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Semua Keahlian" },
-  { value: "DATA_ENTRY", label: "Data Entry" },
-  { value: "CONTENT_WRITER", label: "Penulisan Konten" },
-  { value: "GRAPHIC_DESIGNER", label: "Desain Grafis" },
-  { value: "SOCIAL_MEDIA", label: "Media Sosial" },
-  { value: "VIDEO_EDITOR", label: "Video Editor" },
-  { value: "UIUX_DESIGNER", label: "UI/UX Designer" },
-  { value: "FRONTEND_DEV", label: "Frontend Dev" },
+  { value: "data_entry", label: "Data Entry" },
+  { value: "content_writer", label: "Penulisan Konten" },
+  { value: "graphic_designer", label: "Desain Grafis" },
+  { value: "social_media", label: "Media Sosial" },
+  { value: "video_editor", label: "Video Editor" },
+  { value: "uiux_designer", label: "UI/UX Designer" },
+  { value: "frontend_dev", label: "Frontend Dev" },
 ];
 
 export function DiscoveryClientView({
@@ -138,15 +138,13 @@ export function DiscoveryClientView({
           <div className="flex flex-wrap items-center gap-2">
             {/* ROLE SELECTOR */}
             <select
-              value={currentRole}
+              value={typeof currentRole === "string" ? currentRole : currentRole.id}
               onChange={(e) => updateFilters({ role: e.target.value })}
               className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans"
             >
               {ROLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.value !== "ALL" && studentRoles.includes(opt.value as JobRole)
-                    ? `★ ${opt.label} (Keahlian Anda)`
-                    : opt.label}
+                  {opt.label}
                 </option>
               ))}
             </select>

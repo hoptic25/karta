@@ -24,7 +24,8 @@ export async function expireOpenJobsPastCutoff(now = new Date()): Promise<number
     select: {
       id: true,
       title: true,
-      role: true,
+      jobRoleId: true,
+      jobRole: { select: { key: true } },
       packageTier: true,
       deadlineAt: true,
       subscriptionId: true,
@@ -35,7 +36,8 @@ export async function expireOpenJobsPastCutoff(now = new Date()): Promise<number
   let count = 0;
 
   for (const job of openJobs) {
-    const minHours = getMinimumDeadlineHours(job.role, job.packageTier || "BASIC");
+    const roleKey = job.jobRole?.key || "DATA_ENTRY";
+    const minHours = getMinimumDeadlineHours(roleKey, job.packageTier || "BASIC");
     const cutoffTime = new Date(job.deadlineAt.getTime() - minHours * 60 * 60 * 1000);
 
     if (now > cutoffTime) {
@@ -528,7 +530,8 @@ export async function evaluateJobTimeRules(jobId: string, now = new Date()): Pro
     where: { id: jobId },
     select: {
       status: true,
-      role: true,
+      jobRoleId: true,
+      jobRole: { select: { key: true } },
       packageTier: true,
       deadlineAt: true,
       reviewDueAt: true,
@@ -541,7 +544,8 @@ export async function evaluateJobTimeRules(jobId: string, now = new Date()): Pro
 
   // 1. Jika OPEN dan lewat batas klaim cutoff
   if (job.status === "OPEN") {
-    const minHours = getMinimumDeadlineHours(job.role, job.packageTier || "BASIC");
+    const roleKey = job.jobRole?.key || "DATA_ENTRY";
+    const minHours = getMinimumDeadlineHours(roleKey, job.packageTier || "BASIC");
     const cutoff = new Date(job.deadlineAt.getTime() - minHours * 60 * 60 * 1000);
     if (now > cutoff) {
       await expireOpenJobsPastCutoff(now);

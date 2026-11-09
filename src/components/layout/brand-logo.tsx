@@ -33,7 +33,7 @@ export function BrandLogo({
   const content = (
     <div className={`flex items-center gap-2.5 group ${className}`}>
       <Image
-        src="/logo/karta.webp"
+        src="/logo/Logo-Brown-preview.webp"
         alt="Logo KARTA"
         width={config.dimension}
         height={config.dimension}

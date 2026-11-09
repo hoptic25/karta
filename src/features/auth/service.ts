@@ -78,9 +78,10 @@ export async function completeStudentOnboarding(
       data: {
         userId: user.id,
         username: input.username.toLowerCase(),
+        fullName: input.fullName,
         campusId: campus.id,
         studyProgram: input.studyProgram,
-        roles: input.roles,
+        jobRoleIds: input.jobRoleIds,
         bio: input.bio || null,
         avatarUrl: input.avatarUrl || user.image || null,
         skills: input.skills || [],

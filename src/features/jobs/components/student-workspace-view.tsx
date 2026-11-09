@@ -210,7 +210,7 @@ export function StudentWorkspaceView({ assignment }: StudentWorkspaceViewProps) 
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-beige/60 pb-3">
           <div className="flex items-center gap-2">
             <span className="rounded-md bg-earth-cream px-2.5 py-1 text-xs font-bold text-earth-coffee border border-earth-sand/30">
-              {job.role}
+              {job.jobRoleId}
             </span>
             <span className="rounded-md border border-beige bg-cream px-2.5 py-1 text-xs font-semibold text-primary-brown">
               Format: {job.deliverableType}

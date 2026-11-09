@@ -45,7 +45,7 @@ export function checkClaimEligibility(
   job: Pick<
     Job,
     | "id"
-    | "role"
+    | "jobRoleId"
     | "status"
     | "isHidden"
     | "minLevel"
@@ -84,10 +84,10 @@ export function checkClaimEligibility(
   }
 
   // 4. Role pekerjaan harus sesuai dengan keahlian mahasiswa (BR-C1)
-  if (!student.roles.includes(job.role)) {
+  if (!student.jobRoleIds.includes(job.jobRoleId)) {
     return {
       eligible: false,
-      reason: `Bidang pekerjaan ini (${job.role}) belum terdaftar pada profil keahlian Anda.`,
+      reason: `Bidang pekerjaan ini tidak sesuai dengan keahlian yang terdaftar pada profil Anda.`,
     };
   }
 

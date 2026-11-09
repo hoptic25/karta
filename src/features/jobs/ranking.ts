@@ -1,8 +1,9 @@
-import type { JobRole, PackageTier } from "@/generated/prisma/client";
+import type { PackageTier } from "@/generated/prisma/client";
 
 export interface RankableJob {
   id: string;
-  role: JobRole;
+  roleKey?: string;
+  jobRole?: { key: string } | null;
   packageTier: PackageTier | null;
   deadlineAt: Date;
   publishedAt: Date | null;
@@ -12,18 +13,19 @@ export interface RankableJob {
 /**
  * D-2 Ranking Rekomendasi (PRD §Modul D-2):
  *
- * score = roleMatch(40 jika job.role ∈ student.roles, else 0)
+ * score = roleMatch(40 jika job.roleKey ∈ student.roleKeys, else 0)
  *       + tierBoost(BASIC 0, PROFESSIONAL 10, PREMIUM 20, FREE 0)
  *       + urgency(hoursLeft ≤ 72 ? 20 × (1 − hoursLeft/72) : 0)
  *       + freshness(max(0, 20 − ageHours/6))
  */
 export function calculateRecommendationScore(
   job: RankableJob,
-  studentRoles: JobRole[],
+  studentRoleKeys: string[],
   now: Date = new Date()
 ): number {
   // 1. Role Match (40 poin jika cocok)
-  const roleMatchScore = studentRoles.includes(job.role) ? 40 : 0;
+  const roleKey = job.roleKey || job.jobRole?.key;
+  const roleMatchScore = roleKey && studentRoleKeys.includes(roleKey) ? 40 : 0;
 
   // 2. Tier Boost (BASIC 0, PROFESSIONAL 10, PREMIUM 20, FREE 0)
   let tierBoostScore = 0;
@@ -55,12 +57,12 @@ export function calculateRecommendationScore(
  */
 export function rankJobs<T extends RankableJob>(
   jobs: T[],
-  studentRoles: JobRole[],
+  studentRoleKeys: string[],
   now: Date = new Date()
 ): (T & { score: number })[] {
   const scored = jobs.map((job) => ({
     ...job,
-    score: calculateRecommendationScore(job, studentRoles, now),
+    score: calculateRecommendationScore(job, studentRoleKeys, now),
   }));
 
   return scored.sort((a, b) => {

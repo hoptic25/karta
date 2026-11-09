@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -5,7 +6,9 @@ import { PublicFooter } from "@/components/layout/public-footer";
 export default function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col bg-cream text-primary-brown">
-      <PublicNavbar />
+      <Suspense fallback={<div className="h-18 border-b border-beige bg-cream" />}>
+        <PublicNavbar />
+      </Suspense>
 
       <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 font-sans">
         <div>
@@ -13,7 +16,7 @@ export default function PrivacyPage() {
             Kebijakan Privasi Karta
           </h1>
           <p className="mt-2 text-xs text-primary-brown/60">
-            Terakhir diperbarui: 3 November 2026 • Sesuai Standar Google OAuth & Kebijakan Data Mahasiswa
+            Terakhir diperbarui: 6 November 2026 • Sesuai Standar Keamanan Data & Kebijakan Data Mahasiswa
           </p>
         </div>
 
@@ -27,7 +30,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-1">
               <li>
-                <strong>Data Autentikasi Google OAuth:</strong> Nama lengkap, alamat email Google, dan tautan foto profil avatar publik yang disediakan saat Anda masuk menggunakan tombol <em>Sign in with Google</em>.
+                <strong>Data Akun:</strong> Nama lengkap, alamat email, dan password terenkripsi yang Anda daftarkan saat membuat akun.
               </li>
               <li>
                 <strong>Data Peran Mahasiswa:</strong> Institusi perguruan tinggi mitra, program studi, kode referral pendaftaran kampus, peran keahlian (desain, copywriting, web, media sosial), dan nomor rekening bank pencairan imbalan.
@@ -43,14 +46,14 @@ export default function PrivacyPage() {
 
           <section className="space-y-2">
             <h2 className="font-heading text-xl font-semibold text-primary-brown">
-              2. Penggunaan Google OAuth & Perlindungan Data Pengguna
+              2. Keamanan Data & Enkripsi Password
             </h2>
             <p>
-              Karta menggunakan Google OAuth 2.0 untuk memberikan pengalaman masuk yang cepat, andal, dan aman tanpa menyimpan kredensial kata sandi pengguna di peladen kami.
+              Karta menggunakan enkripsi bcrypt untuk melindungi password Anda. Password tidak pernah disimpan dalam bentuk plain text.
             </p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Kami hanya meminta akses profil dasar (<code>email</code> dan <code>profile</code>).</li>
-              <li>Data akun Google Anda <strong>tidak pernah</strong> dijual, disewakan, atau dibagikan kepada pihak pengiklan mana pun.</li>
+              <li>Password Anda dienkripsi dengan algoritma bcrypt sebelum disimpan di database.</li>
+              <li>Data akun Anda <strong>tidak pernah</strong> dijual, disewakan, atau dibagikan kepada pihak pengiklan mana pun.</li>
               <li>Data Anda tidak digunakan untuk melatih model kecerdasan buatan (AI) umum atau publik.</li>
             </ul>
           </section>

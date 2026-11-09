@@ -35,7 +35,7 @@ export const saveJobDraftSchema = z.object({
     .max(120, "Judul pekerjaan maksimal 120 karakter."),
   description: z.string().min(20, "Deskripsi pekerjaan minimal 20 karakter."),
   instructions: z.string().min(20, "Instruksi pengerjaan minimal 20 karakter."),
-  role: jobRoleEnum,
+  jobRoleId: z.string().min(1, "Pilih peran pekerjaan."),
   deliverableType: deliverableTypeEnum,
   deadlineAt: z.coerce.date(),
   minLevel: studentLevelEnum.default("NEWCOMER"),

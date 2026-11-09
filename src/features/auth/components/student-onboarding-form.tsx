@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   studentOnboardingSchema,
   type StudentOnboardingInput,
-  jobRolesEnum,
 } from "../schemas";
 import {
   completeStudentOnboardingAction,
   checkReferralCodeAction,
 } from "../actions";
-import { JOB_ROLE_LABELS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +29,28 @@ export function StudentOnboardingForm() {
   } | null>(null);
   const [referralError, setReferralError] = useState<string | null>(null);
   const [showReferralHelp, setShowReferralHelp] = useState(false);
+  const [jobRoles, setJobRoles] = useState<Array<{
+    id: string;
+    key: string;
+    label: string;
+  }>>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+
+  useEffect(() => {
+    // Fetch active job roles from API
+    fetch("/api/job-roles")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.jobRoles) {
+          setJobRoles(data.jobRoles);
+        }
+        setLoadingRoles(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load job roles:", err);
+        setLoadingRoles(false);
+      });
+  }, []);
 
   const {
     register,
@@ -45,17 +65,17 @@ export function StudentOnboardingForm() {
       referralCode: "",
       studyProgram: "",
       username: "",
-      roles: [],
+      jobRoleIds: [],
       bio: "",
       skills: [],
       avatarUrl: "",
     },
   });
 
-  const selectedRoles = useWatch({
+  const selectedRoleIds = useWatch({
     control,
-    name: "roles",
-    defaultValue: [] as (typeof jobRolesEnum)[number][],
+    name: "jobRoleIds",
+    defaultValue: [] as string[],
   });
   const currentReferral = useWatch({
     control,
@@ -85,15 +105,15 @@ export function StudentOnboardingForm() {
     }
   };
 
-  const handleRoleToggle = (role: (typeof jobRolesEnum)[number]) => {
-    if (selectedRoles.includes(role)) {
+  const handleRoleToggle = (roleId: string) => {
+    if (selectedRoleIds.includes(roleId)) {
       setValue(
-        "roles",
-        selectedRoles.filter((r) => r !== role),
+        "jobRoleIds",
+        selectedRoleIds.filter((id) => id !== roleId),
         { shouldValidate: true }
       );
     } else {
-      setValue("roles", [...selectedRoles, role], { shouldValidate: true });
+      setValue("jobRoleIds", [...selectedRoleIds, roleId], { shouldValidate: true });
     }
   };
 
@@ -287,31 +307,37 @@ export function StudentOnboardingForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          {jobRolesEnum.map((role) => {
-            const isChecked = selectedRoles.includes(role);
-            return (
-              <div
-                key={role}
-                onClick={() => handleRoleToggle(role)}
-                className={`p-3 rounded-md border cursor-pointer flex items-center gap-3 transition-colors ${isChecked
-                    ? "border-primary-brown bg-primary-brown/5 text-primary-brown"
-                    : "border-beige bg-cream/30 hover:bg-cream"
-                  }`}
-              >
-                <Checkbox
-                  checked={isChecked}
-                  onCheckedChange={() => handleRoleToggle(role)}
-                />
-                <span className="text-xs font-semibold">
-                  {JOB_ROLE_LABELS[role] || role}
-                </span>
-              </div>
-            );
-          })}
+          {loadingRoles ? (
+            <p className="text-xs text-primary-brown/70">Memuat peran...</p>
+          ) : jobRoles.length === 0 ? (
+            <p className="text-xs text-destructive">Tidak ada peran tersedia.</p>
+          ) : (
+            jobRoles.map((role) => {
+              const isChecked = selectedRoleIds.includes(role.id);
+              return (
+                <div
+                  key={role.id}
+                  onClick={() => handleRoleToggle(role.id)}
+                  className={`p-3 rounded-md border cursor-pointer flex items-center gap-3 transition-colors ${isChecked
+                      ? "border-primary-brown bg-primary-brown/5 text-primary-brown"
+                      : "border-beige bg-cream/30 hover:bg-cream"
+                    }`}
+                >
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={() => handleRoleToggle(role.id)}
+                  />
+                  <span className="text-xs font-semibold">
+                    {role.label}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        {errors.roles && (
-          <p className="text-xs text-destructive">{errors.roles.message}</p>
+        {errors.jobRoleIds && (
+          <p className="text-xs text-destructive">{errors.jobRoleIds.message}</p>
         )}
       </div>
 

@@ -337,13 +337,13 @@ export function StudentProfileView({ student }: StudentProfileViewProps) {
               Peran & Kategori Terdaftar
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {student.roles.map((r) => (
+              {student.jobRoleIds.map((roleId: string) => (
                 <Badge
-                  key={r}
+                  key={roleId}
                   variant="outline"
                   className="bg-cream text-earth-primary border-earth-primary/30 text-xs"
                 >
-                  {r.replace(/_/g, " ")}
+                  {roleId.replace(/_/g, " ")}
                 </Badge>
               ))}
               {student.skills.map((s) => (

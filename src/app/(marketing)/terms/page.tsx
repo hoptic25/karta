@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -5,7 +6,9 @@ import { PublicFooter } from "@/components/layout/public-footer";
 export default function TermsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-cream text-primary-brown">
-      <PublicNavbar />
+      <Suspense fallback={<div className="h-18 border-b border-beige bg-cream" />}>
+        <PublicNavbar />
+      </Suspense>
 
       <main className="flex-1 py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 font-sans">
         <div>
@@ -32,7 +35,7 @@ export default function TermsPage() {
               2. Ketentuan Pendaftaran & Akun
             </h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Pendaftaran akun menggunakan autentikasi resmi Google OAuth 2.0. Satu akun Google hanya berhak memiliki satu peran aktif (Mahasiswa atau Pelaku UMKM).</li>
+              <li>Pendaftaran akun menggunakan email dan password. Satu email hanya berhak memiliki satu peran aktif (Mahasiswa atau Pelaku UMKM).</li>
               <li>Pendaftaran mahasiswa mewajibkan penukaran kode referral perguruan tinggi mitra terdaftar dan dapat mewajibkan email institusi (<code>.ac.id</code>) sesuai kebijakan kampus pengelola.</li>
               <li>Pengguna bertanggung jawab penuh atas seluruh aktivitas yang terjadi di bawah akun terdaftar.</li>
             </ul>

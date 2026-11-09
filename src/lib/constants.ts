@@ -25,15 +25,8 @@ export const JOB_STATUS_LABELS: Record<string, string> = {
   EXPIRED: "Kedaluwarsa",
 };
 
-export const JOB_ROLE_LABELS: Record<string, string> = {
-  DATA_ENTRY: "Data Entry",
-  CONTENT_WRITER: "Content Writer",
-  GRAPHIC_DESIGNER: "Graphic Designer",
-  VIDEO_EDITOR: "Video Editor",
-  SOCIAL_MEDIA: "Social Media Specialist",
-  FRONTEND_DEV: "Frontend Developer",
-  UIUX_DESIGNER: "UI/UX Designer",
-};
+// JOB_ROLE_LABELS removed - now fetched from database (JobRole table)
+// Use getActiveJobRoles() from @/features/job-roles/queries
 
 export const STUDENT_LEVEL_LABELS: Record<string, string> = {
   NEWCOMER: "Newcomer",

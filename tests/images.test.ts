@@ -47,6 +47,7 @@ describe("Image Service & Storage (BR-I1 - BR-I5)", () => {
   const studentUser: User = {
     id: "student-1",
     email: "student@kampus.ac.id",
+    password: null,
     name: "Mahasiswa Karta",
     image: null,
     emailVerified: null,
@@ -60,6 +61,7 @@ describe("Image Service & Storage (BR-I1 - BR-I5)", () => {
   const umkmUser: User = {
     id: "umkm-1",
     email: "umkm@toko.com",
+    password: null,
     name: "Toko Berkah",
     image: null,
     emailVerified: null,

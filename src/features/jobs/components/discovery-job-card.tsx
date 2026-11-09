@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatRupiah, formatDateOnly } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
-import type { JobRole, PackageTier } from "@/generated/prisma/client";
+import type { PackageTier } from "@/generated/prisma/client";
 import {
   Clock,
   CheckCircle2,
@@ -19,7 +19,7 @@ export type DiscoveryJob = {
   id: string;
   title: string;
   description: string;
-  role: JobRole;
+  jobRole: { id: string; key: string; label: string } | null;
   packageTier: PackageTier | null;
   isPaid: boolean;
   studentShareIdr: number;
@@ -117,7 +117,7 @@ export function DiscoveryJobCard({ job }: DiscoveryJobCardProps) {
           {/* Tier & Role Badge */}
           <div className="flex flex-col items-end gap-1 shrink-0">
             <span className="rounded-md bg-earth-cream px-2 py-0.5 text-[10px] font-bold text-earth-coffee border border-earth-sand/30">
-              {ROLE_LABELS[job.role] || job.role}
+              {ROLE_LABELS[job.jobRole?.key || ""] || job.jobRole?.label || "Unknown"}
             </span>
             {job.packageTier && job.packageTier !== "FREE" && (
               <span className="text-[9px] font-mono uppercase tracking-wider text-primary-brown/60">

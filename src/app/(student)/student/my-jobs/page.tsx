@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { StudentShell } from "@/components/layout/student-shell";
@@ -47,11 +48,13 @@ export default async function StudentMyJobsPage({ searchParams }: MyJobsPageProp
 
   return (
     <StudentShell activePath="/student/my-jobs">
-      <StudentMyJobsView
-        assignments={assignments}
-        currentTab={currentTab}
-        searchQuery={searchQuery}
-      />
+      <Suspense fallback={<div className="p-8 text-center text-primary-brown/60">Memuat...</div>}>
+        <StudentMyJobsView
+          assignments={assignments}
+          currentTab={currentTab}
+          searchQuery={searchQuery}
+        />
+      </Suspense>
     </StudentShell>
   );
 }

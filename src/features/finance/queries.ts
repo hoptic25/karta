@@ -59,7 +59,8 @@ export async function getPublicStudentPortfolio(username: string) {
         select: {
           id: true,
           title: true,
-          role: true,
+          jobRoleId: true,
+          jobRole: { select: { key: true } },
           isPaid: true,
           publishedAt: true,
           _count: {
@@ -92,7 +93,7 @@ export async function getPublicStudentPortfolio(username: string) {
     job: {
       id: a.job.id,
       title: a.job.title,
-      role: a.job.role,
+      roleKey: a.job.jobRole?.key || "DATA_ENTRY",
       isPaid: a.job.isPaid,
       publishedAt: a.job.publishedAt,
       criteriaCount: a.job._count.criteria,
@@ -112,7 +113,7 @@ export async function getPublicStudentPortfolio(username: string) {
       campus: student.campus,
       studyProgram: student.studyProgram,
       skills: student.skills,
-      roles: student.roles,
+      jobRoleIds: student.jobRoleIds,
       points: student.points,
       level: student.level,
       ratingAvg: student.ratingAvg,

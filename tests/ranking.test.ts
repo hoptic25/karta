@@ -17,7 +17,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
     // Total expected = 40 + 20 + 10 + 19 = 89
     const job: RankableJob = {
       id: "job-1",
-      role: "DATA_ENTRY",
+      roleKey: "DATA_ENTRY",
       packageTier: "PREMIUM",
       deadlineAt: new Date(baseNow.getTime() + 36 * 60 * 60 * 1000),
       publishedAt: new Date(baseNow.getTime() - 6 * 60 * 60 * 1000),
@@ -31,7 +31,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
   it("should give 0 for roleMatch when student does not have the job role", () => {
     const job: RankableJob = {
       id: "job-2",
-      role: "FRONTEND_DEV",
+      roleKey: "FRONTEND_DEV",
       packageTier: "BASIC",
       deadlineAt: new Date(baseNow.getTime() + 100 * 60 * 60 * 1000), // > 72 hours -> urgency = 0
       publishedAt: baseNow, // age 0 -> freshness = 20
@@ -50,7 +50,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
   it("should give correct tier boosts", () => {
     const createJobWithTier = (tier: PackageTier | null): RankableJob => ({
       id: `job-${tier}`,
-      role: "DATA_ENTRY",
+      roleKey: "DATA_ENTRY",
       packageTier: tier,
       deadlineAt: new Date(baseNow.getTime() + 100 * 60 * 60 * 1000), // 0 urgency
       publishedAt: new Date(baseNow.getTime() - 120 * 60 * 60 * 1000), // age 120h -> 20 - 20 = 0 freshness
@@ -72,7 +72,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
     const jobs: RankableJob[] = [
       {
         id: "low-match",
-        role: "VIDEO_EDITOR",
+        roleKey: "VIDEO_EDITOR",
         packageTier: "BASIC",
         deadlineAt: new Date(baseNow.getTime() + 100 * 60 * 60 * 1000),
         publishedAt: new Date(baseNow.getTime() - 24 * 60 * 60 * 1000),
@@ -80,7 +80,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
       },
       {
         id: "high-match",
-        role: "DATA_ENTRY",
+        roleKey: "DATA_ENTRY",
         packageTier: "PREMIUM",
         deadlineAt: new Date(baseNow.getTime() + 24 * 60 * 60 * 1000),
         publishedAt: baseNow,
@@ -88,7 +88,7 @@ describe("Job Ranking Recommendation (PRD §Modul D-2)", () => {
       },
       {
         id: "mid-match",
-        role: "DATA_ENTRY",
+        roleKey: "DATA_ENTRY",
         packageTier: "BASIC",
         deadlineAt: new Date(baseNow.getTime() + 48 * 60 * 60 * 1000),
         publishedAt: new Date(baseNow.getTime() - 6 * 60 * 60 * 1000),

@@ -19,7 +19,9 @@ enum UserStatus {
   SUSPENDED
 }
 
-enum JobRole {
+// JobRole enum - DEPRECATED, will be removed after migration
+// Use JobRole model instead
+enum JobRoleEnum {
   DATA_ENTRY
   CONTENT_WRITER
   GRAPHIC_DESIGNER
@@ -27,6 +29,36 @@ enum JobRole {
   SOCIAL_MEDIA
   FRONTEND_DEV
   UIUX_DESIGNER
+}
+
+model JobRole {
+  id          String   @id @default(cuid())
+  key         String   @unique // Auto-generated from label, immutable
+  label       String
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  studentProfiles StudentProfile[] @relation("StudentJobRoles")
+  jobs            Job[]            @relation("JobToRole")
+  deadlineRules   DeadlineRule[]   @relation("DeadlineRuleJobRole")
+
+  @@index([isActive, sortOrder])
+  @@map("job_roles")
+}
+
+// Keep JobRoleMaster for now, will be removed after migration
+model JobRoleMaster {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  label       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum StudentLevel {
@@ -140,12 +172,13 @@ enum ImagePurpose {
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
+  password      String? // untuk email-based login
   name          String?
   image         String?
   emailVerified DateTime?
-  role          Role?                       // null sampai onboarding selesai
+  role          Role? // null sampai onboarding selesai
   status        UserStatus @default(ACTIVE)
-  isCampusEmail Boolean    @default(false)  // email berakhiran .ac.id
+  isCampusEmail Boolean    @default(false) // email berakhiran .ac.id
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -196,12 +229,12 @@ model VerificationToken {
 
 // ───────── Campus & referral ─────────
 model Campus {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  city          String
-  province      String
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  name      String   @unique
+  city      String
+  province  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
 
   referralCodes ReferralCode[]
   students      StudentProfile[]
@@ -209,17 +242,18 @@ model Campus {
 }
 
 model ReferralCode {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  campusId    String
-  campus      Campus   @relation(fields: [campusId], references: [id])
-  isActive    Boolean  @default(true)
-  expiresAt   DateTime?
-  maxUses     Int?                       // null = tidak terbatas
-  usedCount   Int      @default(0)
-  createdAt   DateTime @default(now())
+  id        String    @id @default(cuid())
+  code      String    @unique
+  campusId  String
+  campus    Campus    @relation(fields: [campusId], references: [id])
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  maxUses   Int? // null = tidak terbatas
+  usedCount Int       @default(0)
+  createdAt DateTime  @default(now())
 
   redemptions ReferralRedemption[]
+
   @@index([campusId])
 }
 
@@ -233,17 +267,22 @@ model ReferralRedemption {
 }
 
 model StudentProfile {
-  id                String       @id @default(cuid())
-  userId            String       @unique
-  user              User         @relation(fields: [userId], references: [id])
-  username          String       @unique          // untuk /s/[username]
-  campusId          String
-  campus            Campus       @relation(fields: [campusId], references: [id])
-  studyProgram      String
-  bio               String?
-  avatarUrl         String?
-  skills            String[]
-  roles             JobRole[]
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  username     String   @unique // untuk /s/[username]
+  fullName     String // Nama lengkap mahasiswa
+  campusId     String
+  campus       Campus   @relation(fields: [campusId], references: [id])
+  studyProgram String
+  bio          String?
+  avatarUrl    String?
+  skills       String[]
+
+  // Changed: JobRole[] enum -> JobRole relation
+  jobRoleIds String[] // Array of JobRole IDs
+  jobRoles   JobRole[] @relation("StudentJobRoles")
+
   points            Int          @default(0)
   level             StudentLevel @default(NEWCOMER)
   ratingAvg         Float        @default(0)
@@ -255,10 +294,11 @@ model StudentProfile {
   bankAccountNumber String?
   createdAt         DateTime     @default(now())
 
-  assignments       JobAssignment[]
-  ledgerEntries     LedgerEntry[]
-  withdrawals       Withdrawal[]
-  pointEvents       PointEvent[]
+  assignments   JobAssignment[]
+  ledgerEntries LedgerEntry[]
+  withdrawals   Withdrawal[]
+  pointEvents   PointEvent[]
+
   @@index([campusId])
 }
 
@@ -273,33 +313,33 @@ model UmkmProfile {
   description     String?
   phone           String?
   logoUrl         String?
-  isCampusPartner Boolean  @default(false)       // ditetapkan admin
+  isCampusPartner Boolean  @default(false) // ditetapkan admin
   partnerCampusId String?
   partnerCampus   Campus?  @relation(fields: [partnerCampusId], references: [id])
   ratingAvg       Float    @default(0)
   ratingCount     Int      @default(0)
   createdAt       DateTime @default(now())
 
-  subscriptions   Subscription[]
-  jobs            Job[]
+  subscriptions Subscription[]
+  jobs          Job[]
 }
 
 // ───────── Packages & Subscription ─────────
 model Package {
-  id                 String         @id @default(cuid())
-  code               String         @unique      // PARTNER_BASIC, NON_PARTNER_PREMIUM, FREE
-  name               String
-  segment            PackageSegment
-  tier               PackageTier
-  priceIdr           Int
-  jobQuota           Int
-  allocationPerJobIdr Int                         // 0 untuk FREE
-  durationDays       Int            @default(30)
-  isPaidJobs         Boolean        @default(true)
-  isActive           Boolean        @default(true)
-  sortOrder          Int            @default(0)
+  id                  String         @id @default(cuid())
+  code                String         @unique // PARTNER_BASIC, NON_PARTNER_PREMIUM, FREE
+  name                String
+  segment             PackageSegment
+  tier                PackageTier
+  priceIdr            Int
+  jobQuota            Int
+  allocationPerJobIdr Int // 0 untuk FREE
+  durationDays        Int            @default(30)
+  isPaidJobs          Boolean        @default(true)
+  isActive            Boolean        @default(true)
+  sortOrder           Int            @default(0)
 
-  subscriptions      Subscription[]
+  subscriptions Subscription[]
 }
 
 model Subscription {
@@ -309,18 +349,19 @@ model Subscription {
   packageId    String
   package      Package            @relation(fields: [packageId], references: [id])
   status       SubscriptionStatus @default(PENDING_PAYMENT)
-  periodKey    String?                            // "2026-11" khusus FREE bulanan
+  periodKey    String? // "2026-11" khusus FREE bulanan
   startsAt     DateTime?
   endsAt       DateTime?
   quotaTotal   Int
   quotaUsed    Int                @default(0)
   paidAt       DateTime?
-  markedPaidBy String?                            // admin userId
+  markedPaidBy String? // admin userId
   paymentNote  String?
   createdAt    DateTime           @default(now())
 
-  jobs         Job[]
-  quotaLedger  QuotaLedger[]
+  jobs        Job[]
+  quotaLedger QuotaLedger[]
+
   @@unique([umkmId, periodKey])
   @@index([umkmId, status])
 }
@@ -330,59 +371,65 @@ model QuotaLedger {
   subscriptionId String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
   jobId          String?
-  delta          Int                              // -1 publish, +1 restore
+  delta          Int // -1 publish, +1 restore
   reason         String
   createdAt      DateTime     @default(now())
 }
 
 // ───────── Jobs ─────────
 model Job {
-  id                String      @id @default(cuid())
-  umkmId            String
-  umkm              UmkmProfile @relation(fields: [umkmId], references: [id])
-  subscriptionId    String?                      // diisi saat publish
-  subscription      Subscription? @relation(fields: [subscriptionId], references: [id])
+  id             String        @id @default(cuid())
+  umkmId         String
+  umkm           UmkmProfile   @relation(fields: [umkmId], references: [id])
+  subscriptionId String? // diisi saat publish
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
 
-  title             String
-  description       String
-  instructions      String
-  role              JobRole
-  deliverableType   String                       // DRIVE | DOCS | FIGMA | GITHUB | CANVA | NOTION | OTHER
+  title        String
+  description  String
+  instructions String
+
+  // Changed: JobRole enum -> JobRole relation
+  jobRoleId String
+  jobRole   JobRole @relation("JobToRole", fields: [jobRoleId], references: [id])
+
+  deliverableType   String // DRIVE | DOCS | FIGMA | GITHUB | CANVA | NOTION | OTHER
   deadlineAt        DateTime
   minLevel          StudentLevel @default(NEWCOMER)
-  beginnerFriendly  Boolean     @default(false)
+  beginnerFriendly  Boolean      @default(false)
   newcomerLaneUntil DateTime?
 
-  status            JobStatus   @default(DRAFT)
-  isHidden          Boolean     @default(false)
+  status   JobStatus @default(DRAFT)
+  isHidden Boolean   @default(false)
 
   // snapshot saat publish
-  packageTier       PackageTier?
-  isPaid            Boolean     @default(false)
-  allocationIdr     Int         @default(0)
-  studentShareIdr   Int         @default(0)
-  platformShareIdr  Int         @default(0)
+  packageTier      PackageTier?
+  isPaid           Boolean      @default(false)
+  allocationIdr    Int          @default(0)
+  studentShareIdr  Int          @default(0)
+  platformShareIdr Int          @default(0)
 
-  publishedAt       DateTime?
-  revisionCount     Int         @default(0)
-  reviewDueAt       DateTime?
-  revisionDueAt     DateTime?
-  disputeUntil      DateTime?
-  rejectionFinalAt  DateTime?
-  autoAccepted      Boolean     @default(false)
-  completedAt       DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  publishedAt      DateTime?
+  revisionCount    Int       @default(0)
+  reviewDueAt      DateTime?
+  revisionDueAt    DateTime?
+  disputeUntil     DateTime?
+  rejectionFinalAt DateTime?
+  autoAccepted     Boolean   @default(false)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  criteria          AcceptanceCriterion[]
-  images            ImageAsset[]
-  assignments       JobAssignment[]
-  deadlineRequests  DeadlineChangeRequest[]
-  dispute           Dispute?
-  failureReports    FailureReport[]
-  ratings           Rating[]
-  @@index([status, role, publishedAt])
+  criteria         AcceptanceCriterion[]
+  images           ImageAsset[]
+  assignments      JobAssignment[]
+  deadlineRequests DeadlineChangeRequest[]
+  dispute          Dispute?
+  failureReports   FailureReport[]
+  ratings          Rating[]
+
+  @@index([status, jobRoleId, publishedAt])
   @@index([umkmId, status])
+  @@index([jobRoleId])
 }
 
 model AcceptanceCriterion {
@@ -394,22 +441,23 @@ model AcceptanceCriterion {
 }
 
 model JobAssignment {
-  id           String           @id @default(cuid())
-  jobId        String
-  job          Job              @relation(fields: [jobId], references: [id])
-  studentId    String
-  student      StudentProfile   @relation(fields: [studentId], references: [id])
-  status       AssignmentStatus @default(ACTIVE)
-  claimedAt    DateTime         @default(now())
-  startedAt    DateTime?
-  endedAt      DateTime?
-  endReason    String?
+  id        String           @id @default(cuid())
+  jobId     String
+  job       Job              @relation(fields: [jobId], references: [id])
+  studentId String
+  student   StudentProfile   @relation(fields: [studentId], references: [id])
+  status    AssignmentStatus @default(ACTIVE)
+  claimedAt DateTime         @default(now())
+  startedAt DateTime?
+  endedAt   DateTime?
+  endReason String?
 
-  submissions  Submission[]
-  ledgerEntries LedgerEntry[]
+  submissions    Submission[]
+  ledgerEntries  LedgerEntry[]
   failureReports FailureReport[]
-  @@index([studentId, status])
   // Partial unique index dibuat lewat migrasi SQL manual
+
+  @@index([studentId, status])
 }
 
 model Submission {
@@ -417,14 +465,15 @@ model Submission {
   assignmentId String
   assignment   JobAssignment @relation(fields: [assignmentId], references: [id])
   jobId        String
-  number       Int                                  // 1, 2, 3
+  number       Int // 1, 2, 3
   url          String
   note         String?
-  selfCheck    Json?                                // [{criterionId, checked}]
+  selfCheck    Json? // [{criterionId, checked}]
   isLate       Boolean       @default(false)
   submittedAt  DateTime      @default(now())
 
-  review       Review?
+  review Review?
+
   @@unique([jobId, number])
 }
 
@@ -435,7 +484,7 @@ model Review {
   reviewerUserId  String
   decision        ReviewDecision
   reason          String?
-  criteriaResults Json                              // [{criterionId, met, comment?}]
+  criteriaResults Json // [{criterionId, met, comment?}]
   createdAt       DateTime       @default(now())
 }
 
@@ -451,51 +500,52 @@ model DeadlineChangeRequest {
 }
 
 model Dispute {
-  id           String             @id @default(cuid())
-  jobId        String             @unique
-  job          Job                @relation(fields: [jobId], references: [id])
+  id             String             @id @default(cuid())
+  jobId          String             @unique
+  job            Job                @relation(fields: [jobId], references: [id])
   raisedByUserId String
-  reason       String
-  evidenceUrl  String?
-  status       DisputeStatus      @default(OPEN)
-  resolution   DisputeResolution?
-  adminNote    String?
-  resolvedBy   String?
-  createdAt    DateTime           @default(now())
-  resolvedAt   DateTime?
+  reason         String
+  evidenceUrl    String?
+  status         DisputeStatus      @default(OPEN)
+  resolution     DisputeResolution?
+  adminNote      String?
+  resolvedBy     String?
+  createdAt      DateTime           @default(now())
+  resolvedAt     DateTime?
 }
 
 model FailureReport {
-  id              String              @id @default(cuid())
-  jobId           String
-  job             Job                 @relation(fields: [jobId], references: [id])
-  assignmentId    String
-  assignment      JobAssignment       @relation(fields: [assignmentId], references: [id])
+  id               String              @id @default(cuid())
+  jobId            String
+  job              Job                 @relation(fields: [jobId], references: [id])
+  assignmentId     String
+  assignment       JobAssignment       @relation(fields: [assignmentId], references: [id])
   reportedByUserId String
-  reason          String
-  studentResponse String?
-  status          FailureReportStatus @default(OPEN)
-  adminNote       String?
-  resolvedBy      String?
-  createdAt       DateTime            @default(now())
-  resolvedAt      DateTime?
+  reason           String
+  studentResponse  String?
+  status           FailureReportStatus @default(OPEN)
+  adminNote        String?
+  resolvedBy       String?
+  createdAt        DateTime            @default(now())
+  resolvedAt       DateTime?
 }
 
 // ───────── Money ─────────
 model LedgerEntry {
-  id           String        @id @default(cuid())
+  id           String          @id @default(cuid())
   jobId        String
   assignmentId String
-  assignment   JobAssignment @relation(fields: [assignmentId], references: [id])
+  assignment   JobAssignment   @relation(fields: [assignmentId], references: [id])
   type         LedgerType
-  status       LedgerStatus  @default(RESERVED)
+  status       LedgerStatus    @default(RESERVED)
   amountIdr    Int
-  studentId    String?                               // null untuk PLATFORM_FEE
+  studentId    String? // null untuk PLATFORM_FEE
   student      StudentProfile? @relation(fields: [studentId], references: [id])
   withdrawalId String?
-  withdrawal   Withdrawal?   @relation(fields: [withdrawalId], references: [id])
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  withdrawal   Withdrawal?     @relation(fields: [withdrawalId], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
   @@index([studentId, status])
 }
 
@@ -513,7 +563,7 @@ model Withdrawal {
   requestedAt       DateTime         @default(now())
   processedAt       DateTime?
 
-  entries           LedgerEntry[]
+  entries LedgerEntry[]
 }
 
 // ───────── Reputation ─────────
@@ -524,7 +574,7 @@ model PointEvent {
   jobId     String?
   delta     Int
   reason    String
-  createdBy String?                                // admin userId untuk penyesuaian manual
+  createdBy String? // admin userId untuk penyesuaian manual
   createdAt DateTime       @default(now())
 }
 
@@ -535,10 +585,11 @@ model Rating {
   direction  RatingDirection
   fromUserId String
   toUserId   String
-  score      Float                                  // rata-rata dimensi bila STUDENT_TO_UMKM
-  dimensions Json?                                  // {clarity, communication, professionalism, reviewSpeed}
+  score      Float // rata-rata dimensi bila STUDENT_TO_UMKM
+  dimensions Json? // {clarity, communication, professionalism, reviewSpeed}
   comment    String?
   createdAt  DateTime        @default(now())
+
   @@unique([jobId, direction])
 }
 
@@ -570,6 +621,7 @@ model Notification {
   href      String?
   readAt    DateTime?
   createdAt DateTime  @default(now())
+
   @@index([userId, readAt, createdAt])
 }
 
@@ -577,11 +629,12 @@ model AuditLog {
   id        String   @id @default(cuid())
   actorId   String?
   actor     User?    @relation(fields: [actorId], references: [id])
-  action    String                                  // mis. "SUBSCRIPTION_MARK_PAID"
+  action    String // mis. "SUBSCRIPTION_MARK_PAID"
   entity    String
   entityId  String
   meta      Json?
   createdAt DateTime @default(now())
+
   @@index([entity, entityId])
 }
 
@@ -592,9 +645,14 @@ model PlatformConfig {
 }
 
 model DeadlineRule {
-  id       String      @id @default(cuid())
-  role     JobRole
+  id String @id @default(cuid())
+
+  // Changed: JobRole enum -> JobRole relation
+  jobRoleId String
+  jobRole   JobRole @relation("DeadlineRuleJobRole", fields: [jobRoleId], references: [id])
+
   tier     PackageTier
   minHours Int
-  @@unique([role, tier])
+
+  @@unique([jobRoleId, tier])
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
@@ -31,7 +32,9 @@ export default async function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-cream text-primary-brown selection:bg-peach selection:text-primary-brown">
-      <PublicNavbar />
+      <Suspense fallback={<div className="h-18 border-b border-beige bg-cream" />}>
+        <PublicNavbar />
+      </Suspense>
 
       <main className="flex-1">
         {/* ━━━ 1. HERO SECTION ━━━ */}
@@ -50,14 +53,14 @@ export default async function LandingPage() {
 
             {/* CTA buttons */}
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/register?as=umkm" className="w-full sm:w-auto">
+              <Link href="/register/umkm" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto text-sm px-8 h-12 shadow-sm">
                   <Briefcase className="size-4 mr-2" />
                   Mulai sebagai UMKM
                   <ArrowRight className="size-4 ml-2" />
                 </Button>
               </Link>
-              <Link href="/register?as=student" className="w-full sm:w-auto">
+              <Link href="/register/student" className="w-full sm:w-auto">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto text-sm px-8 h-12 border border-beige">
                   <GraduationCap className="size-4 mr-2" />
                   Daftar sebagai Mahasiswa
@@ -545,7 +548,7 @@ export default async function LandingPage() {
               Bergabunglah hari ini bersama pelaku usaha mikro dan mahasiswa unggul di seluruh Indonesia.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/register?as=student">
+              <Link href="/register/student">
                 <Button
                   size="lg"
                   className="bg-white text-primary-brown hover:bg-cream shadow-md text-sm px-8 h-12 font-semibold"
@@ -555,7 +558,7 @@ export default async function LandingPage() {
                   <ArrowRight className="size-4 ml-2" />
                 </Button>
               </Link>
-              <Link href="/register?as=umkm">
+              <Link href="/register/umkm">
                 <Button
                   variant="outline"
                   size="lg"

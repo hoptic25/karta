@@ -124,6 +124,7 @@ export async function withdrawJob(
   const job = await prisma.job.findUnique({
     where: { id: jobId },
     include: {
+      jobRole: { select: { key: true } },
       umkm: {
         select: { userId: true },
       },
@@ -156,7 +157,8 @@ export async function withdrawJob(
 
   // Tentukan apakah job masih dapat dibuka kembali berdasarkan batas klaim
   let nextJobStatus: JobStatus = "OPEN";
-  const cutoff = getClaimCutoffTime(job.deadlineAt, job.role, job.packageTier || "BASIC");
+  const roleKey = job.jobRole?.key || "DATA_ENTRY";
+  const cutoff = getClaimCutoffTime(job.deadlineAt, roleKey, job.packageTier || "BASIC");
   if (now > cutoff) {
     nextJobStatus = "EXPIRED";
   }

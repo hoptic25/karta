@@ -55,7 +55,7 @@ export function JobForm({ initialJob, mode = "CREATE" }: JobFormProps) {
   const [title, setTitle] = useState(initialJob?.title || "");
   const [description, setDescription] = useState(initialJob?.description || "");
   const [instructions, setInstructions] = useState(initialJob?.instructions || "");
-  const [role, setRole] = useState(initialJob?.role || "DATA_ENTRY");
+  const [jobRoleId, setJobRoleId] = useState(initialJob?.jobRoleId || "");
   const [deliverableType, setDeliverableType] = useState(
     initialJob?.deliverableType || "DRIVE"
   );
@@ -135,7 +135,7 @@ export function JobForm({ initialJob, mode = "CREATE" }: JobFormProps) {
           title,
           description,
           instructions,
-          role,
+          jobRoleId,
           deliverableType,
           deadlineAt: new Date(deadlineAt),
           minLevel,
@@ -228,16 +228,13 @@ export function JobForm({ initialJob, mode = "CREATE" }: JobFormProps) {
               Bidang Keahlian (Role) <span className="text-destructive">*</span>
             </label>
             <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as typeof role)}
+              value={jobRoleId}
+              onChange={(e) => setJobRoleId(e.target.value)}
               disabled={isEditingOpen}
               className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:bg-cream disabled:cursor-not-allowed"
             >
-              {jobRoleEnum.options.map((r) => (
-                <option key={r} value={r}>
-                  {ROLE_LABELS[r] || r}
-                </option>
-              ))}
+              <option value="">Pilih bidang keahlian...</option>
+              {/* TODO: Fetch jobRoles from API/props */}
             </select>
             {isEditingOpen && (
               <p className="text-[11px] text-primary-brown/60 mt-1">

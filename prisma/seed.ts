@@ -4,8 +4,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import {
   PackageSegment,
   PackageTier,
-  JobRole,
 } from "../src/generated/prisma/enums";
+import { generateKeyFromLabel } from "../src/features/job-roles/service";
 
 const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
@@ -19,7 +19,41 @@ const prisma = new PrismaClient({
 async function main() {
   console.log("🌱 Starting seed...");
 
-  // 1. Seed Packages (§15.1)
+  // 1. Seed JobRole table with default roles
+  const defaultJobRoles = [
+    { label: "Data Entry", description: "Entri dan pengolahan data", sortOrder: 1 },
+    { label: "Content Writer", description: "Penulisan konten dan artikel", sortOrder: 2 },
+    { label: "Graphic Designer", description: "Desain grafis dan visual", sortOrder: 3 },
+    { label: "Video Editor", description: "Editing dan produksi video", sortOrder: 4 },
+    { label: "Social Media", description: "Manajemen media sosial", sortOrder: 5 },
+    { label: "Frontend Dev", description: "Pengembangan front-end web", sortOrder: 6 },
+    { label: "UI/UX Designer", description: "Desain antarmuka dan pengalaman pengguna", sortOrder: 7 },
+  ];
+
+  const jobRoleIds: Record<string, string> = {};
+  
+  for (const role of defaultJobRoles) {
+    const key = generateKeyFromLabel(role.label);
+    const created = await prisma.jobRole.upsert({
+      where: { key },
+      update: { 
+        label: role.label, 
+        description: role.description,
+        sortOrder: role.sortOrder,
+      },
+      create: {
+        key,
+        label: role.label,
+        description: role.description,
+        isActive: true,
+        sortOrder: role.sortOrder,
+      },
+    });
+    jobRoleIds[key] = created.id;
+  }
+  console.log(`✅ Seeded ${defaultJobRoles.length} job roles`);
+
+  // 2. Seed Packages (§15.1)
   const packages = [
     {
       code: "FREE",
@@ -116,52 +150,62 @@ async function main() {
   }
   console.log(`✅ Seeded ${packages.length} packages`);
 
-  // 2. Seed DeadlineRule (§15.2)
+  // 3. Seed DeadlineRule (§15.2) - Using JobRole IDs
   const deadlineRules = [
-    { role: JobRole.DATA_ENTRY, tier: PackageTier.BASIC, minHours: 48 },
-    { role: JobRole.DATA_ENTRY, tier: PackageTier.PROFESSIONAL, minHours: 36 },
-    { role: JobRole.DATA_ENTRY, tier: PackageTier.PREMIUM, minHours: 24 },
+    { roleKey: "DATA_ENTRY", tier: PackageTier.BASIC, minHours: 48 },
+    { roleKey: "DATA_ENTRY", tier: PackageTier.PROFESSIONAL, minHours: 36 },
+    { roleKey: "DATA_ENTRY", tier: PackageTier.PREMIUM, minHours: 24 },
 
-    { role: JobRole.CONTENT_WRITER, tier: PackageTier.BASIC, minHours: 72 },
-    { role: JobRole.CONTENT_WRITER, tier: PackageTier.PROFESSIONAL, minHours: 48 },
-    { role: JobRole.CONTENT_WRITER, tier: PackageTier.PREMIUM, minHours: 36 },
+    { roleKey: "CONTENT_WRITER", tier: PackageTier.BASIC, minHours: 72 },
+    { roleKey: "CONTENT_WRITER", tier: PackageTier.PROFESSIONAL, minHours: 48 },
+    { roleKey: "CONTENT_WRITER", tier: PackageTier.PREMIUM, minHours: 36 },
 
-    { role: JobRole.GRAPHIC_DESIGNER, tier: PackageTier.BASIC, minHours: 72 },
-    { role: JobRole.GRAPHIC_DESIGNER, tier: PackageTier.PROFESSIONAL, minHours: 48 },
-    { role: JobRole.GRAPHIC_DESIGNER, tier: PackageTier.PREMIUM, minHours: 36 },
+    { roleKey: "GRAPHIC_DESIGNER", tier: PackageTier.BASIC, minHours: 72 },
+    { roleKey: "GRAPHIC_DESIGNER", tier: PackageTier.PROFESSIONAL, minHours: 48 },
+    { roleKey: "GRAPHIC_DESIGNER", tier: PackageTier.PREMIUM, minHours: 36 },
 
-    { role: JobRole.SOCIAL_MEDIA, tier: PackageTier.BASIC, minHours: 72 },
-    { role: JobRole.SOCIAL_MEDIA, tier: PackageTier.PROFESSIONAL, minHours: 48 },
-    { role: JobRole.SOCIAL_MEDIA, tier: PackageTier.PREMIUM, minHours: 36 },
+    { roleKey: "SOCIAL_MEDIA", tier: PackageTier.BASIC, minHours: 72 },
+    { roleKey: "SOCIAL_MEDIA", tier: PackageTier.PROFESSIONAL, minHours: 48 },
+    { roleKey: "SOCIAL_MEDIA", tier: PackageTier.PREMIUM, minHours: 36 },
 
-    { role: JobRole.VIDEO_EDITOR, tier: PackageTier.BASIC, minHours: 120 },
-    { role: JobRole.VIDEO_EDITOR, tier: PackageTier.PROFESSIONAL, minHours: 96 },
-    { role: JobRole.VIDEO_EDITOR, tier: PackageTier.PREMIUM, minHours: 72 },
+    { roleKey: "VIDEO_EDITOR", tier: PackageTier.BASIC, minHours: 120 },
+    { roleKey: "VIDEO_EDITOR", tier: PackageTier.PROFESSIONAL, minHours: 96 },
+    { roleKey: "VIDEO_EDITOR", tier: PackageTier.PREMIUM, minHours: 72 },
 
-    { role: JobRole.UIUX_DESIGNER, tier: PackageTier.BASIC, minHours: 120 },
-    { role: JobRole.UIUX_DESIGNER, tier: PackageTier.PROFESSIONAL, minHours: 96 },
-    { role: JobRole.UIUX_DESIGNER, tier: PackageTier.PREMIUM, minHours: 72 },
+    { roleKey: "UIUX_DESIGNER", tier: PackageTier.BASIC, minHours: 120 },
+    { roleKey: "UIUX_DESIGNER", tier: PackageTier.PROFESSIONAL, minHours: 96 },
+    { roleKey: "UIUX_DESIGNER", tier: PackageTier.PREMIUM, minHours: 72 },
 
-    { role: JobRole.FRONTEND_DEV, tier: PackageTier.BASIC, minHours: 168 },
-    { role: JobRole.FRONTEND_DEV, tier: PackageTier.PROFESSIONAL, minHours: 120 },
-    { role: JobRole.FRONTEND_DEV, tier: PackageTier.PREMIUM, minHours: 96 },
+    { roleKey: "FRONTEND_DEV", tier: PackageTier.BASIC, minHours: 168 },
+    { roleKey: "FRONTEND_DEV", tier: PackageTier.PROFESSIONAL, minHours: 120 },
+    { roleKey: "FRONTEND_DEV", tier: PackageTier.PREMIUM, minHours: 96 },
   ];
 
   for (const rule of deadlineRules) {
+    const jobRoleId = jobRoleIds[rule.roleKey];
+    if (!jobRoleId) {
+      console.warn(`⚠️  Skipping deadline rule for unknown role: ${rule.roleKey}`);
+      continue;
+    }
+    
     await prisma.deadlineRule.upsert({
       where: {
-        role_tier: {
-          role: rule.role,
+        jobRoleId_tier: {
+          jobRoleId,
           tier: rule.tier,
         },
       },
       update: { minHours: rule.minHours },
-      create: rule,
+      create: {
+        jobRoleId,
+        tier: rule.tier,
+        minHours: rule.minHours,
+      },
     });
   }
   console.log(`✅ Seeded ${deadlineRules.length} deadline rules`);
 
-  // 3. Seed PlatformConfig (§15.3)
+  // 4. Seed PlatformConfig (§15.3)
   const configs: Record<string, unknown> = {
     studentSharePct: 60,
     freeQuotaPerMonth: 3,
@@ -223,7 +267,7 @@ async function main() {
   }
   console.log(`✅ Seeded ${Object.keys(configs).length} platform configs`);
 
-  // 4. Seed Initial Campuses & Referral Codes (§15.4)
+  // 5. Seed Initial Campuses & Referral Codes (§15.4)
   const itb = await prisma.campus.upsert({
     where: { name: "Institut Teknologi Bandung" },
     update: {},

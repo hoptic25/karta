@@ -191,6 +191,7 @@ export async function resolveFailureByAdmin(
     include: {
       job: {
         include: {
+          jobRole: { select: { key: true } },
           umkm: { select: { id: true, userId: true, businessName: true } },
         },
       },
@@ -226,7 +227,8 @@ export async function resolveFailureByAdmin(
 
     // 3. Ledger VOIDED
     // 4. Job kembali OPEN dengan deadlineAt = max(deadlineAt lama, now + minHours)
-    const minHours = getMinimumDeadlineHours(job.role, job.packageTier || "BASIC");
+    const roleKey = job.jobRole?.key || "DATA_ENTRY";
+    const minHours = getMinimumDeadlineHours(roleKey, job.packageTier || "BASIC");
     const minNewDeadline = new Date(now.getTime() + minHours * 60 * 60 * 1000);
     const updatedDeadline = job.deadlineAt > minNewDeadline ? job.deadlineAt : minNewDeadline;
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { formatRupiah, formatDateOnly } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Job, AcceptanceCriterion, Subscription, Package, JobAssignment, StudentProfile, User, Campus } from "@/generated/prisma/client";
+import type { Job, AcceptanceCriterion, Subscription, Package, JobAssignment, StudentProfile, User, Campus, JobRole } from "@/generated/prisma/client";
 import {
   Plus,
   Search,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 type JobWithRelations = Job & {
+  jobRole: JobRole | null;
   criteria: AcceptanceCriterion[];
   subscription: (Subscription & { package: Package }) | null;
   assignments: (JobAssignment & {
@@ -143,7 +144,7 @@ export function JobListView({ jobs }: JobListViewProps) {
       return (
         job.title.toLowerCase().includes(q) ||
         job.description.toLowerCase().includes(q) ||
-        job.role.toLowerCase().includes(q)
+        (job.jobRole?.key.toLowerCase().includes(q) ?? false)
       );
     }
 
@@ -262,7 +263,7 @@ export function JobListView({ jobs }: JobListViewProps) {
                     </span>
 
                     <span className="rounded-md bg-earth-cream px-2 py-0.5 text-[11px] font-semibold text-earth-coffee border border-earth-sand/30">
-                      {ROLE_SHORT_LABELS[job.role] || job.role}
+                      {ROLE_SHORT_LABELS[job.jobRole?.key || ""] || job.jobRole?.key || "Unknown"}
                     </span>
 
                     {job.isPaid ? (

@@ -18,15 +18,15 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Karta — Marketplace Tugas Mikro Kampus & UMKM",
+    default: "Karta",
     template: "%s | Karta",
   },
   description:
     "Menghubungkan UMKM dengan mahasiswa kampus mitra untuk menyelesaikan tugas mikro berkualitas, membangun reputasi terverifikasi dan dampak nyata.",
   icons: {
-    icon: "/logo/karta.png",
-    shortcut: "/logo/karta.png",
-    apple: "/logo/karta.png",
+    icon: "/logo/Logo-Secondary-preview.webp",
+    shortcut: "/logo/Logo-Secondary-preview.webp",
+    apple: "/logo/Logo-Secondary-preview.webp",
   },
 };
 
