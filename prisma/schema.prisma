@@ -1,0 +1,658 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────── Enums ─────────
+enum Role {
+  STUDENT
+  UMKM
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+// JobRole enum - DEPRECATED, will be removed after migration
+// Use JobRole model instead
+enum JobRoleEnum {
+  DATA_ENTRY
+  CONTENT_WRITER
+  GRAPHIC_DESIGNER
+  VIDEO_EDITOR
+  SOCIAL_MEDIA
+  FRONTEND_DEV
+  UIUX_DESIGNER
+}
+
+model JobRole {
+  id          String   @id @default(cuid())
+  key         String   @unique // Auto-generated from label, immutable
+  label       String
+  description String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  studentProfiles StudentProfile[] @relation("StudentJobRoles")
+  jobs            Job[]            @relation("JobToRole")
+  deadlineRules   DeadlineRule[]   @relation("DeadlineRuleJobRole")
+
+  @@index([isActive, sortOrder])
+  @@map("job_roles")
+}
+
+// Keep JobRoleMaster for now, will be removed after migration
+model JobRoleMaster {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  label       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum StudentLevel {
+  NEWCOMER
+  RELIABLE
+  TRUSTED
+  EXPERT
+}
+
+enum PackageSegment {
+  FREE
+  PARTNER
+  NON_PARTNER
+}
+
+enum PackageTier {
+  FREE
+  BASIC
+  PROFESSIONAL
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLAIMED
+  IN_PROGRESS
+  SUBMITTED
+  REVISION_REQUESTED
+  ACCEPTED
+  REJECTED
+  DISPUTED
+  CANCELLED
+  EXPIRED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  COMPLETED
+  WITHDRAWN
+  FAILED
+}
+
+enum ReviewDecision {
+  ACCEPT
+  REQUEST_REVISION
+  REJECT
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+enum DisputeResolution {
+  ACCEPT_WORK
+  UPHOLD_REJECTION
+}
+
+enum FailureReportStatus {
+  OPEN
+  CONFIRMED
+  DISMISSED
+}
+
+enum DeadlineChangeStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+enum LedgerType {
+  STUDENT_SHARE
+  PLATFORM_FEE
+}
+
+enum LedgerStatus {
+  RESERVED
+  HELD
+  PAYABLE
+  PAID
+  RECOGNIZED
+  VOIDED
+}
+
+enum WithdrawalStatus {
+  REQUESTED
+  PAID
+  REJECTED
+}
+
+enum RatingDirection {
+  UMKM_TO_STUDENT
+  STUDENT_TO_UMKM
+}
+
+enum ImagePurpose {
+  AVATAR
+  UMKM_LOGO
+  JOB_REFERENCE
+}
+
+// ───────── Identity ─────────
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password      String? // untuk email-based login
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  role          Role? // null sampai onboarding selesai
+  status        UserStatus @default(ACTIVE)
+  isCampusEmail Boolean    @default(false) // email berakhiran .ac.id
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  student       StudentProfile?
+  umkm          UmkmProfile?
+  redemption    ReferralRedemption?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  accounts      Account[]
+  sessions      Session[]
+  images        ImageAsset[]
+}
+
+// ───────── Auth.js adapter ─────────
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ───────── Campus & referral ─────────
+model Campus {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  city      String
+  province  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  referralCodes ReferralCode[]
+  students      StudentProfile[]
+  partnerUmkms  UmkmProfile[]
+}
+
+model ReferralCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  campusId  String
+  campus    Campus    @relation(fields: [campusId], references: [id])
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
+  maxUses   Int? // null = tidak terbatas
+  usedCount Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  redemptions ReferralRedemption[]
+
+  @@index([campusId])
+}
+
+model ReferralRedemption {
+  id         String       @id @default(cuid())
+  codeId     String
+  code       ReferralCode @relation(fields: [codeId], references: [id])
+  userId     String       @unique
+  user       User         @relation(fields: [userId], references: [id])
+  redeemedAt DateTime     @default(now())
+}
+
+model StudentProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  username     String   @unique // untuk /s/[username]
+  fullName     String // Nama lengkap mahasiswa
+  campusId     String
+  campus       Campus   @relation(fields: [campusId], references: [id])
+  studyProgram String
+  bio          String?
+  avatarUrl    String?
+  skills       String[]
+
+  // Changed: JobRole[] enum -> JobRole relation
+  jobRoleIds String[] // Array of JobRole IDs
+  jobRoles   JobRole[] @relation("StudentJobRoles")
+
+  points            Int          @default(0)
+  level             StudentLevel @default(NEWCOMER)
+  ratingAvg         Float        @default(0)
+  ratingCount       Int          @default(0)
+  completedJobs     Int          @default(0)
+  portfolioPublic   Boolean      @default(true)
+  bankName          String?
+  bankAccountName   String?
+  bankAccountNumber String?
+  createdAt         DateTime     @default(now())
+
+  assignments   JobAssignment[]
+  ledgerEntries LedgerEntry[]
+  withdrawals   Withdrawal[]
+  pointEvents   PointEvent[]
+
+  @@index([campusId])
+}
+
+model UmkmProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  businessName    String
+  category        String
+  province        String
+  city            String
+  description     String?
+  phone           String?
+  logoUrl         String?
+  isCampusPartner Boolean  @default(false) // ditetapkan admin
+  partnerCampusId String?
+  partnerCampus   Campus?  @relation(fields: [partnerCampusId], references: [id])
+  ratingAvg       Float    @default(0)
+  ratingCount     Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  subscriptions Subscription[]
+  jobs          Job[]
+}
+
+// ───────── Packages & Subscription ─────────
+model Package {
+  id                  String         @id @default(cuid())
+  code                String         @unique // PARTNER_BASIC, NON_PARTNER_PREMIUM, FREE
+  name                String
+  segment             PackageSegment
+  tier                PackageTier
+  priceIdr            Int
+  jobQuota            Int
+  allocationPerJobIdr Int // 0 untuk FREE
+  durationDays        Int            @default(30)
+  isPaidJobs          Boolean        @default(true)
+  isActive            Boolean        @default(true)
+  sortOrder           Int            @default(0)
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String             @id @default(cuid())
+  umkmId       String
+  umkm         UmkmProfile        @relation(fields: [umkmId], references: [id])
+  packageId    String
+  package      Package            @relation(fields: [packageId], references: [id])
+  status       SubscriptionStatus @default(PENDING_PAYMENT)
+  periodKey    String? // "2026-11" khusus FREE bulanan
+  startsAt     DateTime?
+  endsAt       DateTime?
+  quotaTotal   Int
+  quotaUsed    Int                @default(0)
+  paidAt       DateTime?
+  markedPaidBy String? // admin userId
+  paymentNote  String?
+  createdAt    DateTime           @default(now())
+
+  jobs        Job[]
+  quotaLedger QuotaLedger[]
+
+  @@unique([umkmId, periodKey])
+  @@index([umkmId, status])
+}
+
+model QuotaLedger {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  jobId          String?
+  delta          Int // -1 publish, +1 restore
+  reason         String
+  createdAt      DateTime     @default(now())
+}
+
+// ───────── Jobs ─────────
+model Job {
+  id             String        @id @default(cuid())
+  umkmId         String
+  umkm           UmkmProfile   @relation(fields: [umkmId], references: [id])
+  subscriptionId String? // diisi saat publish
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  title        String
+  description  String
+  instructions String
+
+  // Changed: JobRole enum -> JobRole relation
+  jobRoleId String
+  jobRole   JobRole @relation("JobToRole", fields: [jobRoleId], references: [id])
+
+  deliverableType   String // DRIVE | DOCS | FIGMA | GITHUB | CANVA | NOTION | OTHER
+  deadlineAt        DateTime
+  minLevel          StudentLevel @default(NEWCOMER)
+  beginnerFriendly  Boolean      @default(false)
+  newcomerLaneUntil DateTime?
+
+  status   JobStatus @default(DRAFT)
+  isHidden Boolean   @default(false)
+
+  // snapshot saat publish
+  packageTier      PackageTier?
+  isPaid           Boolean      @default(false)
+  allocationIdr    Int          @default(0)
+  studentShareIdr  Int          @default(0)
+  platformShareIdr Int          @default(0)
+
+  publishedAt      DateTime?
+  revisionCount    Int       @default(0)
+  reviewDueAt      DateTime?
+  revisionDueAt    DateTime?
+  disputeUntil     DateTime?
+  rejectionFinalAt DateTime?
+  autoAccepted     Boolean   @default(false)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  criteria         AcceptanceCriterion[]
+  images           ImageAsset[]
+  assignments      JobAssignment[]
+  deadlineRequests DeadlineChangeRequest[]
+  dispute          Dispute?
+  failureReports   FailureReport[]
+  ratings          Rating[]
+
+  @@index([status, jobRoleId, publishedAt])
+  @@index([umkmId, status])
+  @@index([jobRoleId])
+}
+
+model AcceptanceCriterion {
+  id       String @id @default(cuid())
+  jobId    String
+  job      Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  text     String
+  position Int
+}
+
+model JobAssignment {
+  id        String           @id @default(cuid())
+  jobId     String
+  job       Job              @relation(fields: [jobId], references: [id])
+  studentId String
+  student   StudentProfile   @relation(fields: [studentId], references: [id])
+  status    AssignmentStatus @default(ACTIVE)
+  claimedAt DateTime         @default(now())
+  startedAt DateTime?
+  endedAt   DateTime?
+  endReason String?
+
+  submissions    Submission[]
+  ledgerEntries  LedgerEntry[]
+  failureReports FailureReport[]
+  // Partial unique index dibuat lewat migrasi SQL manual
+
+  @@index([studentId, status])
+}
+
+model Submission {
+  id           String        @id @default(cuid())
+  assignmentId String
+  assignment   JobAssignment @relation(fields: [assignmentId], references: [id])
+  jobId        String
+  number       Int // 1, 2, 3
+  url          String
+  note         String?
+  selfCheck    Json? // [{criterionId, checked}]
+  isLate       Boolean       @default(false)
+  submittedAt  DateTime      @default(now())
+
+  review Review?
+
+  @@unique([jobId, number])
+}
+
+model Review {
+  id              String         @id @default(cuid())
+  submissionId    String         @unique
+  submission      Submission     @relation(fields: [submissionId], references: [id])
+  reviewerUserId  String
+  decision        ReviewDecision
+  reason          String?
+  criteriaResults Json // [{criterionId, met, comment?}]
+  createdAt       DateTime       @default(now())
+}
+
+model DeadlineChangeRequest {
+  id            String               @id @default(cuid())
+  jobId         String
+  job           Job                  @relation(fields: [jobId], references: [id])
+  newDeadlineAt DateTime
+  reason        String?
+  status        DeadlineChangeStatus @default(PENDING)
+  createdAt     DateTime             @default(now())
+  respondedAt   DateTime?
+}
+
+model Dispute {
+  id             String             @id @default(cuid())
+  jobId          String             @unique
+  job            Job                @relation(fields: [jobId], references: [id])
+  raisedByUserId String
+  reason         String
+  evidenceUrl    String?
+  status         DisputeStatus      @default(OPEN)
+  resolution     DisputeResolution?
+  adminNote      String?
+  resolvedBy     String?
+  createdAt      DateTime           @default(now())
+  resolvedAt     DateTime?
+}
+
+model FailureReport {
+  id               String              @id @default(cuid())
+  jobId            String
+  job              Job                 @relation(fields: [jobId], references: [id])
+  assignmentId     String
+  assignment       JobAssignment       @relation(fields: [assignmentId], references: [id])
+  reportedByUserId String
+  reason           String
+  studentResponse  String?
+  status           FailureReportStatus @default(OPEN)
+  adminNote        String?
+  resolvedBy       String?
+  createdAt        DateTime            @default(now())
+  resolvedAt       DateTime?
+}
+
+// ───────── Money ─────────
+model LedgerEntry {
+  id           String          @id @default(cuid())
+  jobId        String
+  assignmentId String
+  assignment   JobAssignment   @relation(fields: [assignmentId], references: [id])
+  type         LedgerType
+  status       LedgerStatus    @default(RESERVED)
+  amountIdr    Int
+  studentId    String? // null untuk PLATFORM_FEE
+  student      StudentProfile? @relation(fields: [studentId], references: [id])
+  withdrawalId String?
+  withdrawal   Withdrawal?     @relation(fields: [withdrawalId], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([studentId, status])
+}
+
+model Withdrawal {
+  id                String           @id @default(cuid())
+  studentId         String
+  student           StudentProfile   @relation(fields: [studentId], references: [id])
+  amountIdr         Int
+  bankName          String
+  bankAccountName   String
+  bankAccountNumber String
+  status            WithdrawalStatus @default(REQUESTED)
+  adminNote         String?
+  processedBy       String?
+  requestedAt       DateTime         @default(now())
+  processedAt       DateTime?
+
+  entries LedgerEntry[]
+}
+
+// ───────── Reputation ─────────
+model PointEvent {
+  id        String         @id @default(cuid())
+  studentId String
+  student   StudentProfile @relation(fields: [studentId], references: [id])
+  jobId     String?
+  delta     Int
+  reason    String
+  createdBy String? // admin userId untuk penyesuaian manual
+  createdAt DateTime       @default(now())
+}
+
+model Rating {
+  id         String          @id @default(cuid())
+  jobId      String
+  job        Job             @relation(fields: [jobId], references: [id])
+  direction  RatingDirection
+  fromUserId String
+  toUserId   String
+  score      Float // rata-rata dimensi bila STUDENT_TO_UMKM
+  dimensions Json? // {clarity, communication, professionalism, reviewSpeed}
+  comment    String?
+  createdAt  DateTime        @default(now())
+
+  @@unique([jobId, direction])
+}
+
+// ───────── System ─────────
+model ImageAsset {
+  id          String       @id @default(cuid())
+  ownerUserId String
+  owner       User         @relation(fields: [ownerUserId], references: [id])
+  purpose     ImagePurpose
+  url         String
+  pathname    String       @unique
+  contentType String
+  sizeBytes   Int
+  jobId       String?
+  job         Job?         @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+
+  @@index([ownerUserId, purpose])
+  @@index([jobId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  action    String // mis. "SUBSCRIPTION_MARK_PAID"
+  entity    String
+  entityId  String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
+
+model PlatformConfig {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model DeadlineRule {
+  id String @id @default(cuid())
+
+  // Changed: JobRole enum -> JobRole relation
+  jobRoleId String
+  jobRole   JobRole @relation("DeadlineRuleJobRole", fields: [jobRoleId], references: [id])
+
+  tier     PackageTier
+  minHours Int
+
+  @@unique([jobRoleId, tier])
+}
