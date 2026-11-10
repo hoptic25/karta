@@ -2,6 +2,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
+import { LazySection } from "@/components/ui/lazy-section";
 import { Button } from "@/components/ui/button";
 import { getCachedActivePackages } from "@/features/subscription";
 import { getCachedLandingMetrics } from "@/features/platform";
@@ -130,6 +131,7 @@ export default async function LandingPage() {
         </section>
 
         {/* ━━━ 3. PROBLEM & SOLUTION ━━━ */}
+        <LazySection placeholderHeight="h-96">
         <section className="py-20 lg:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -219,8 +221,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 4. CARA KERJA (HOW IT WORKS) ━━━ */}
+        <LazySection placeholderHeight="h-96">
         <section id="cara-kerja" className="py-20 lg:py-24 bg-white border-y border-beige">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -334,11 +338,15 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 5. PAKET & HARGA (PRICING) ━━━ */}
+        <LazySection placeholderHeight="h-[500px]">
         <LandingPricing packages={packages} />
+        </LazySection>
 
         {/* ━━━ 6. PEMBEDA KARTA (DIFFERENTIATORS D1–D6) ━━━ */}
+        <LazySection placeholderHeight="h-96">
         <section id="pembeda" className="py-20 lg:py-24 bg-white border-y border-beige">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -410,8 +418,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 7. DAMPAK NYATA (IMPACT COUNTERS) ━━━ */}
+        <LazySection placeholderHeight="h-64">
         <section id="dampak" className="py-20 lg:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -467,8 +477,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 8. KAMPUS MITRA (CAMPUS PARTNERS) ━━━ */}
+        <LazySection placeholderHeight="h-64">
         <section id="kampus" className="py-20 lg:py-24 bg-white border-y border-beige">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14">
@@ -505,8 +517,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 9. FAQ SECTION ━━━ */}
+        <LazySection placeholderHeight="h-96">
         <section id="faq" className="py-20 lg:py-24">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
@@ -556,8 +570,10 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
 
         {/* ━━━ 10. BOTTOM CTA ━━━ */}
+        <LazySection placeholderHeight="h-64">
         <section className="py-20 lg:py-24 bg-primary-brown text-white">
           <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
@@ -590,6 +606,7 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+        </LazySection>
       </main>
 
       <PublicFooter />
