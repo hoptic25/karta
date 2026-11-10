@@ -9,39 +9,43 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { auth } from "@/auth";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { ArrowRight, LogIn, ChevronDown, GraduationCap, Briefcase } from "lucide-react";
 
 async function NavbarAuthButtons() {
   const session = await auth();
 
+  const dashboardHref =
+    session?.user?.role === "STUDENT"
+      ? "/student"
+      : session?.user?.role === "UMKM"
+      ? "/umkm"
+      : session?.user?.role === "ADMIN"
+      ? "/admin"
+      : "/onboarding";
+
   if (session?.user) {
     return (
-      <Link
-        href={
-          session.user.role === "STUDENT"
-            ? "/student"
-            : session.user.role === "UMKM"
-            ? "/umkm"
-            : session.user.role === "ADMIN"
-            ? "/admin"
-            : "/onboarding"
-        }
-      >
-        <Button size="sm" className="font-semibold text-xs h-9 px-4">
-          Masuk ke Dashboard
-          <ArrowRight className="size-3.5 ml-1.5" />
-        </Button>
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link href={dashboardHref}>
+          <Button size="sm" className="font-semibold text-xs h-9 px-3 sm:px-4 shadow-xs">
+            <span className="hidden sm:inline">Masuk ke Dashboard</span>
+            <span className="sm:hidden">Dashboard</span>
+            <ArrowRight className="size-3.5 ml-1.5" />
+          </Button>
+        </Link>
+        <MobileNav isLoggedIn={true} dashboardHref={dashboardHref} />
+      </div>
     );
   }
 
   return (
-    <>
-      <Link href="/login">
+    <div className="flex items-center gap-2 sm:gap-2.5">
+      <Link href="/login" className="hidden sm:inline-block">
         <Button
           variant="outline"
           size="sm"
-          className="font-semibold text-xs border-beige/90 text-primary-brown hover:bg-white h-9 px-4"
+          className="font-semibold text-xs border-beige/90 text-primary-brown hover:bg-white h-9 px-3.5"
         >
           <LogIn className="size-3.5 mr-1" />
           Masuk
@@ -49,7 +53,7 @@ async function NavbarAuthButtons() {
       </Link>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button size="sm" className="font-semibold text-xs h-9 px-4" />}
+          render={<Button size="sm" className="font-semibold text-xs h-9 px-3.5 sm:px-4" />}
         >
           Daftar
           <ChevronDown className="size-3.5 ml-1" />
@@ -75,7 +79,8 @@ async function NavbarAuthButtons() {
           </Link>
         </DropdownMenuContent>
       </DropdownMenu>
-    </>
+      <MobileNav isLoggedIn={false} />
+    </div>
   );
 }
 
@@ -84,15 +89,15 @@ export function PublicNavbar() {
     <header className="sticky top-0 z-40 w-full border-b border-beige/80 bg-cream/95 backdrop-blur-md">
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <BrandLogo size="md" priority />
-          <span className="hidden sm:inline-block text-[11px] font-bold text-primary-brown/85 tracking-widest uppercase border-l border-beige/90 pl-3">
+          <span className="hidden xl:inline-block text-[11px] font-bold text-primary-brown/85 tracking-widest uppercase border-l border-beige/90 pl-3">
             Campus Marketplace
           </span>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-xs font-semibold tracking-wide text-primary-brown">
+        {/* Navigation Links (Desktop Only >= 1024px) */}
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-semibold tracking-wide text-primary-brown">
           <Link
             href="#cara-kerja"
             className="transition-colors hover:text-earth-sage py-1"
@@ -131,13 +136,13 @@ export function PublicNavbar() {
           </Link>
         </nav>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 min-w-[140px] justify-end">
+        {/* Action Buttons + Mobile Trigger */}
+        <div className="flex items-center gap-2 shrink-0 justify-end">
           <Suspense
             fallback={
               <div className="flex items-center gap-2">
-                <div className="h-9 w-18 rounded-md bg-beige/40 animate-pulse" />
                 <div className="h-9 w-20 rounded-md bg-beige/40 animate-pulse" />
+                <div className="h-9 w-9 lg:hidden rounded-md bg-beige/40 animate-pulse" />
               </div>
             }
           >
