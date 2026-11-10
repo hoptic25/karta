@@ -9,6 +9,7 @@ export interface BrandLogoProps {
   showText?: boolean;
   badge?: string;
   badgeClassName?: string;
+  priority?: boolean;
 }
 
 const sizeMap = {
@@ -27,6 +28,7 @@ export function BrandLogo({
   showText = false,
   badge,
   badgeClassName = "bg-primary-brown text-white",
+  priority,
 }: BrandLogoProps) {
   const config = sizeMap[size];
 
@@ -38,7 +40,7 @@ export function BrandLogo({
         width={config.dimension}
         height={config.dimension}
         className={`object-contain rounded-md shrink-0 ${config.img} ${imgClassName}`}
-        priority={size === "lg" || size === "xl"}
+        priority={priority ?? (size === "md" || size === "lg" || size === "xl")}
       />
       {showText && (
         <span

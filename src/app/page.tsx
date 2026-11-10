@@ -1,12 +1,11 @@
-import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PublicNavbar } from "@/components/layout/public-navbar";
 import { PublicFooter } from "@/components/layout/public-footer";
-import { LandingPricing } from "@/components/layout/landing-pricing";
 import { Button } from "@/components/ui/button";
-import { getActivePackages } from "@/features/subscription";
+import { getCachedActivePackages } from "@/features/subscription";
 import { getCachedLandingMetrics } from "@/features/platform";
-import { getActiveCampuses } from "@/features/campus";
+import { getCachedActiveCampuses } from "@/features/campus";
 import { formatCurrency } from "@/lib/format";
 import {
   Briefcase,
@@ -23,18 +22,38 @@ import {
   CircleDot,
 } from "lucide-react";
 
+export const revalidate = 60;
+
+const LandingPricing = dynamic(
+  () => import("@/components/layout/landing-pricing").then((mod) => mod.LandingPricing),
+  {
+    loading: () => (
+      <section id="paket" className="border-b border-beige py-24 bg-white/50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <div className="h-5 w-32 mx-auto bg-beige/60 rounded-full animate-pulse mb-4" />
+          <div className="h-10 w-96 max-w-full mx-auto bg-beige/50 rounded-lg animate-pulse mb-6" />
+          <div className="h-16 w-full max-w-2xl mx-auto bg-beige/30 rounded-lg animate-pulse mb-12" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="h-96 rounded-2xl bg-cream/70 border border-beige animate-pulse" />
+            <div className="h-96 rounded-2xl bg-cream/70 border border-beige animate-pulse" />
+            <div className="h-96 rounded-2xl bg-cream/70 border border-beige animate-pulse" />
+          </div>
+        </div>
+      </section>
+    ),
+  }
+);
+
 export default async function LandingPage() {
   const [packages, metrics, campuses] = await Promise.all([
-    getActivePackages(),
+    getCachedActivePackages(),
     getCachedLandingMetrics(),
-    getActiveCampuses(),
+    getCachedActiveCampuses(),
   ]);
 
   return (
     <div className="flex min-h-screen flex-col bg-cream text-primary-brown selection:bg-peach selection:text-primary-brown">
-      <Suspense fallback={<div className="h-18 border-b border-beige bg-cream" />}>
-        <PublicNavbar />
-      </Suspense>
+      <PublicNavbar />
 
       <main className="flex-1">
         {/* ━━━ 1. HERO SECTION ━━━ */}

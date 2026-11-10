@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import {
   getUmkmSubscriptionOverview,
@@ -10,6 +11,16 @@ export async function getActivePackages() {
     orderBy: { sortOrder: "asc" },
   });
 }
+
+export const getCachedActivePackages = unstable_cache(
+  async () => {
+    return await prisma.package.findMany({
+      orderBy: { sortOrder: "asc" },
+    });
+  },
+  ["active-packages-landing"],
+  { revalidate: 300, tags: ["packages"] }
+);
 
 export async function getUmkmSubscriptionPageData(userId: string) {
   const umkm = await prisma.umkmProfile.findUnique({

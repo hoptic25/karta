@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import type { Campus } from "@/generated/prisma/client";
 
@@ -65,3 +66,14 @@ export async function getActiveCampuses(): Promise<Campus[]> {
 
   return campuses;
 }
+
+export const getCachedActiveCampuses = unstable_cache(
+  async () => {
+    return await prisma.campus.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+    });
+  },
+  ["active-campuses-landing"],
+  { revalidate: 300, tags: ["campuses"] }
+);
