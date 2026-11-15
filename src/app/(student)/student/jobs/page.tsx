@@ -8,6 +8,8 @@ import {
   DiscoveryClientView,
 } from "@/features/jobs";
 
+export const dynamic = "force-dynamic";
+
 interface StudentJobsPageProps {
   searchParams: Promise<{
     roleKey?: string | "ALL";
