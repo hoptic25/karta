@@ -14,7 +14,7 @@ import { UmkmFailureModal } from "./umkm-failure-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatRupiah, formatDateTime, formatDateOnly } from "@/lib/format";
+import { formatRupiah, formatDateTime, formatDateOnly, formatPackageTier } from "@/lib/format";
 import type {
   Job,
   AcceptanceCriterion,
@@ -238,7 +238,7 @@ export function JobDetailView({
             </span>
             {job.isPaid ? (
               <span className="text-xs font-bold text-earth-primary bg-earth-sage/10 px-2.5 py-1 rounded-md border border-earth-sage/30">
-                Imbalan Mahasiswa: {formatRupiah(job.studentShareIdr)} (Tier {job.packageTier})
+                Imbalan Mahasiswa: {formatRupiah(job.studentShareIdr)} (Tier {formatPackageTier(job.packageTier)})
               </span>
             ) : (
               <span className="rounded-md bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 text-xs font-bold">

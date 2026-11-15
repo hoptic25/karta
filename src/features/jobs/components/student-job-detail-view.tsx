@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { takeJobAction } from "../actions";
 import { Button } from "@/components/ui/button";
-import { formatRupiah, formatDateTime, formatDateOnly } from "@/lib/format";
+import { formatRupiah, formatDateTime, formatDateOnly, formatPackageTier } from "@/lib/format";
 import type {
   Job,
   AcceptanceCriterion,
@@ -123,7 +123,7 @@ export function StudentJobDetailView({
             </span>
             {job.packageTier && (
               <span className="rounded-md bg-cream border border-beige px-2.5 py-1 text-xs font-semibold text-primary-brown">
-                Tier {job.packageTier}
+                Tier {formatPackageTier(job.packageTier)}
               </span>
             )}
             {job.beginnerFriendly && (

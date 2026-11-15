@@ -178,19 +178,19 @@ export function JobForm({ initialJob, mode = "CREATE" }: JobFormProps) {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-xs">
           <div className="p-3 bg-white rounded-xl border border-earth-sand/20 shadow-xs">
-            <span className="font-bold text-earth-coffee">Tier Basic (≤ 1 Jam Kerja):</span>
+            <span className="font-bold text-earth-coffee">Tier Pro (≤ 1 Jam Kerja):</span>
             <p className="text-earth-coffee/70 mt-1">
               Data input 30–50 baris, 1 visual medsos feed sederhana, atau proofreading artikel pendek.
             </p>
           </div>
           <div className="p-3 bg-white rounded-xl border border-earth-sand/20 shadow-xs">
-            <span className="font-bold text-earth-coffee">Tier Professional (≤ 2 Jam):</span>
+            <span className="font-bold text-earth-coffee">Tier Plus (≤ 2 Jam):</span>
             <p className="text-earth-coffee/70 mt-1">
               Desain brosur promosi 2 sisi, pembuatan video reels 30 detik dari materi yang ada, atau 3 copywriting caption.
             </p>
           </div>
           <div className="p-3 bg-white rounded-xl border border-earth-sand/20 shadow-xs">
-            <span className="font-bold text-earth-coffee">Tier Premium (≤ 4 Jam):</span>
+            <span className="font-bold text-earth-coffee">Tier Ultra (≤ 4 Jam):</span>
             <p className="text-earth-coffee/70 mt-1">
               Kompilasi katalog produk, perbaikan CSS responsif landing page, atau desain logo UMKM standar.
             </p>

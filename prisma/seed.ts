@@ -69,7 +69,7 @@ async function main() {
     },
     {
       code: "PARTNER_BASIC",
-      name: "Mitra Basic",
+      name: "Mitra Pro",
       segment: PackageSegment.PARTNER,
       tier: PackageTier.BASIC,
       priceIdr: 75_000,
@@ -81,7 +81,7 @@ async function main() {
     },
     {
       code: "PARTNER_PROFESSIONAL",
-      name: "Mitra Professional",
+      name: "Mitra Plus",
       segment: PackageSegment.PARTNER,
       tier: PackageTier.PROFESSIONAL,
       priceIdr: 180_000,
@@ -93,7 +93,7 @@ async function main() {
     },
     {
       code: "PARTNER_PREMIUM",
-      name: "Mitra Premium",
+      name: "Mitra Ultra",
       segment: PackageSegment.PARTNER,
       tier: PackageTier.PREMIUM,
       priceIdr: 480_000,
@@ -105,7 +105,7 @@ async function main() {
     },
     {
       code: "NON_PARTNER_BASIC",
-      name: "Reguler Basic",
+      name: "Reguler Pro",
       segment: PackageSegment.NON_PARTNER,
       tier: PackageTier.BASIC,
       priceIdr: 90_000,
@@ -117,7 +117,7 @@ async function main() {
     },
     {
       code: "NON_PARTNER_PROFESSIONAL",
-      name: "Reguler Professional",
+      name: "Reguler Plus",
       segment: PackageSegment.NON_PARTNER,
       tier: PackageTier.PROFESSIONAL,
       priceIdr: 216_000,
@@ -129,7 +129,7 @@ async function main() {
     },
     {
       code: "NON_PARTNER_PREMIUM",
-      name: "Reguler Premium",
+      name: "Reguler Ultra",
       segment: PackageSegment.NON_PARTNER,
       tier: PackageTier.PREMIUM,
       priceIdr: 576_000,

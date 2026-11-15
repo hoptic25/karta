@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatPackageTier } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
@@ -143,7 +143,7 @@ export function LandingPricing({ packages }: LandingPricingProps) {
                       {pkg.name}
                     </h3>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-primary-brown/60 bg-cream px-2 py-1 rounded">
-                      {pkg.tier}
+                      {formatPackageTier(pkg.tier)}
                     </span>
                   </div>
 
@@ -289,7 +289,7 @@ export function LandingPricing({ packages }: LandingPricingProps) {
                           </span>
                         </td>
                         <td className="py-3.5 px-3 font-medium">
-                          {pkg.tier}
+                          {formatPackageTier(pkg.tier)}
                         </td>
                         <td className="py-3.5 px-4 font-bold text-primary-brown">
                           {isFree ? "Gratis (Rp 0)" : formatCurrency(pkg.priceIdr)}

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { publishJobAction } from "../actions";
 import { Button } from "@/components/ui/button";
-import { formatRupiah } from "@/lib/format";
+import { formatRupiah, formatPackageTier } from "@/lib/format";
 import type { Subscription, Package } from "@/generated/prisma/client";
 import { CheckCircle2, AlertCircle, Sparkles, Send, X, Layers } from "lucide-react";
 
@@ -159,7 +159,7 @@ export function PublishModal({
                               <strong className="text-earth-primary">
                                 {formatRupiah(Math.floor((sub.package.allocationPerJobIdr * 60) / 100))}
                               </strong>{" "}
-                              (Tier {sub.package.tier})
+                              (Tier {formatPackageTier(sub.package.tier)})
                             </span>
                           ) : (
                             <span className="text-amber-800 font-medium">

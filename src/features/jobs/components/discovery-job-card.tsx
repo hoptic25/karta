@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { formatRupiah, formatDateOnly } from "@/lib/format";
+import { formatRupiah, formatDateOnly, formatPackageTier } from "@/lib/format";
 import { buttonVariants } from "@/components/ui/button";
 import type { PackageTier } from "@/generated/prisma/client";
 import {
@@ -121,7 +121,7 @@ export function DiscoveryJobCard({ job }: DiscoveryJobCardProps) {
             </span>
             {job.packageTier && job.packageTier !== "FREE" && (
               <span className="text-[9px] font-mono uppercase tracking-wider text-primary-brown/60">
-                Tier {job.packageTier}
+                Tier {formatPackageTier(job.packageTier)}
               </span>
             )}
           </div>

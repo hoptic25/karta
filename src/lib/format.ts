@@ -55,3 +55,27 @@ export function maskBankAccount(accountNumber?: string | null): string {
   const last4 = clean.slice(-4);
   return `•••• ${last4}`;
 }
+
+/**
+ * Format PackageTier into human-readable label:
+ * BASIC -> Pro
+ * PROFESSIONAL -> Plus
+ * PREMIUM -> Ultra
+ * FREE -> Gratis
+ */
+export function formatPackageTier(tier: string | null | undefined): string {
+  if (!tier) return "-";
+  switch (tier.toUpperCase()) {
+    case "BASIC":
+      return "Pro";
+    case "PROFESSIONAL":
+      return "Plus";
+    case "PREMIUM":
+      return "Ultra";
+    case "FREE":
+      return "Gratis";
+    default:
+      return tier;
+  }
+}
+
