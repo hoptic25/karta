@@ -8,48 +8,65 @@ export interface RankableJob {
   deadlineAt: Date;
   publishedAt: Date | null;
   createdAt: Date;
+  beginnerFriendly?: boolean;
 }
 
 /**
- * D-2 Ranking Rekomendasi (PRD §Modul D-2):
+ * SmartMatch™ Engine (D-2 Ranking Rekomendasi):
  *
- * score = roleMatch(40 jika job.roleKey ∈ student.roleKeys, else 0)
- *       + tierBoost(BASIC 0, PROFESSIONAL 10, PREMIUM 20, FREE 0)
- *       + urgency(hoursLeft ≤ 72 ? 20 × (1 − hoursLeft/72) : 0)
- *       + freshness(max(0, 20 − ageHours/6))
+ * Mengkalkulasi skor kompatibilitas (0 - 100) berbasis multi-faktor:
+ * 1. Role / Keahlian Match (Maks 45 poin):
+ *    - Jika cocok dengan role minat mahasiswa = +45
+ * 2. Tier & Value Fit (Maks 20 poin):
+ *    - ULTRA (PREMIUM): +20
+ *    - PLUS (PROFESSIONAL): +15
+ *    - PRO (BASIC): +10
+ *    - FREE: +5
+ * 3. Urgensi / Waktu Tersisa (Maks 15 poin):
+ *    - Memberi prioritas pada tugas yang aktif dan butuh segera diklaim
+ * 4. Freshness / Kebaruan Publikasi (Maks 10 poin):
+ *    - Pekerjaan baru diterbitkan mendapatkan prioritas
+ * 5. Beginner Friendly Boost (Maks 10 poin):
+ *    - Tugas ramah mahasiswa baru mendapat dorongan aksesibilitas
  */
 export function calculateRecommendationScore(
   job: RankableJob,
   studentRoleKeys: string[],
   now: Date = new Date()
 ): number {
-  // 1. Role Match (40 poin jika cocok)
+  // 1. Role Match (45 poin)
   const roleKey = job.roleKey || job.jobRole?.key;
-  const roleMatchScore = roleKey && studentRoleKeys.includes(roleKey) ? 40 : 0;
+  const roleMatchScore = roleKey && studentRoleKeys.includes(roleKey) ? 45 : 0;
 
-  // 2. Tier Boost (BASIC 0, PROFESSIONAL 10, PREMIUM 20, FREE 0)
-  let tierBoostScore = 0;
-  if (job.packageTier === "PROFESSIONAL") {
-    tierBoostScore = 10;
-  } else if (job.packageTier === "PREMIUM") {
+  // 2. Tier Boost (Maks 20 poin)
+  let tierBoostScore = 5;
+  if (job.packageTier === "PREMIUM") {
     tierBoostScore = 20;
+  } else if (job.packageTier === "PROFESSIONAL") {
+    tierBoostScore = 15;
+  } else if (job.packageTier === "BASIC") {
+    tierBoostScore = 10;
   }
 
-  // 3. Urgency (hoursLeft <= 72 ? 20 * (1 - hoursLeft/72) : 0)
+  // 3. Urgency (hoursLeft <= 72 ? 15 * (1 - hoursLeft/72) : 0)
   const msLeft = job.deadlineAt.getTime() - now.getTime();
   const hoursLeft = Math.max(0, msLeft / (1000 * 60 * 60));
   let urgencyScore = 0;
   if (hoursLeft <= 72) {
-    urgencyScore = 20 * (1 - hoursLeft / 72);
+    urgencyScore = 15 * (1 - hoursLeft / 72);
   }
 
-  // 4. Freshness (max(0, 20 - ageHours/6))
+  // 4. Freshness (max(0, 10 - ageHours/12))
   const baseTime = job.publishedAt || job.createdAt;
   const ageMs = Math.max(0, now.getTime() - baseTime.getTime());
   const ageHours = ageMs / (1000 * 60 * 60);
-  const freshnessScore = Math.max(0, 20 - ageHours / 6);
+  const freshnessScore = Math.max(0, 10 - ageHours / 12);
 
-  return roleMatchScore + tierBoostScore + urgencyScore + freshnessScore;
+  // 5. Friendly accessibility (10 poin)
+  const friendlyScore = job.beginnerFriendly ? 10 : 5;
+
+  const totalRaw = roleMatchScore + tierBoostScore + urgencyScore + freshnessScore + friendlyScore;
+  return Math.min(99, Math.max(50, Math.round(totalRaw)));
 }
 
 /**

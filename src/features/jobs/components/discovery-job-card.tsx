@@ -36,6 +36,7 @@ export type DiscoveryJob = {
   };
   criteria: { id: string; text: string }[];
   claimCutoffAt: Date;
+  matchScore?: number;
   eligibility: {
     eligible: boolean;
     reason?: string;
@@ -114,8 +115,14 @@ export function DiscoveryJobCard({ job }: DiscoveryJobCardProps) {
             </div>
           </div>
 
-          {/* Tier & Role Badge */}
+          {/* Tier & Role Badge + SmartMatch Score */}
           <div className="flex flex-col items-end gap-1 shrink-0">
+            {job.matchScore !== undefined && job.matchScore > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-800 shadow-xs">
+                <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                {job.matchScore}% Cocok
+              </span>
+            )}
             <span className="rounded-md bg-earth-cream px-2 py-0.5 text-[10px] font-bold text-earth-coffee border border-earth-sand/30">
               {ROLE_LABELS[job.jobRole?.key || ""] || job.jobRole?.label || "Unknown"}
             </span>

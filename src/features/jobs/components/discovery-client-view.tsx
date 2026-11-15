@@ -172,7 +172,7 @@ export function DiscoveryClientView({
               onChange={(e) => updateFilters({ sort: e.target.value })}
               className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans font-semibold text-primary-brown"
             >
-              <option value="RECOMMENDED">Rekomendasi Pintar (D-2)</option>
+              <option value="RECOMMENDED">✨ SmartMatch™ (Paling Cocok)</option>
               <option value="LATEST">Terbaru Diterbitkan</option>
               <option value="DEADLINE">Deadline Paling Dekat</option>
               <option value="REWARD">Imbalan Tertinggi</option>

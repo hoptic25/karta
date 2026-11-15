@@ -117,7 +117,7 @@ export async function getJobForEdit(jobId: string, umkmId: string) {
 
 
 import { isJobClaimableByDeadline, getClaimCutoffTime } from "./deadline";
-import { rankJobs } from "./ranking";
+import { rankJobs, calculateRecommendationScore } from "./ranking";
 import { checkClaimEligibility } from "./claim";
 import type { JobRoleEnum } from "@/generated/prisma/client";
 
@@ -222,7 +222,13 @@ export async function getStudentDiscoveryJobs(
   // Filter hanya yang belum lewat cutoff klaim (BR-J5)
   const claimableJobs = rawJobs.filter((job) => isJobClaimableByDeadline(job, now));
 
-  // Berikan status kelayakan klaim untuk masing-masing job
+  // Hitung skor rekomendasi SmartMatch untuk semua pekerjaan
+  const studentJobRoles = await prisma.jobRole.findMany({
+    where: { id: { in: student.jobRoleIds } },
+    select: { key: true },
+  });
+  const roleKeys = studentJobRoles.map((r) => r.key);
+
   const enrichedJobs = claimableJobs.map((job) => {
     const eligibility = checkClaimEligibility(
       student,
@@ -240,10 +246,25 @@ export async function getStudentDiscoveryJobs(
       job.packageTier || "BASIC"
     );
 
+    const matchScore = calculateRecommendationScore(
+      {
+        id: job.id,
+        roleKey: job.jobRole?.key,
+        packageTier: job.packageTier,
+        deadlineAt: job.deadlineAt,
+        publishedAt: job.publishedAt,
+        createdAt: job.createdAt,
+        beginnerFriendly: job.beginnerFriendly,
+      },
+      roleKeys,
+      now
+    );
+
     return {
       ...job,
       eligibility,
       claimCutoffAt: cutoffAt,
+      matchScore,
     };
   });
 
@@ -252,25 +273,12 @@ export async function getStudentDiscoveryJobs(
   let sortedJobs = enrichedJobs;
 
   if (sortMode === "RECOMMENDED") {
-    // Get role keys from student's job roles for ranking
-    const studentJobRoles = await prisma.jobRole.findMany({
-      where: { id: { in: student.jobRoleIds } },
-      select: { key: true },
+    sortedJobs = [...enrichedJobs].sort((a, b) => {
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore;
+      }
+      return a.deadlineAt.getTime() - b.deadlineAt.getTime();
     });
-    const roleKeys = studentJobRoles.map((r) => r.key);
-    
-    // Map enrichedJobs to RankableJob format for ranking
-    const rankableJobs = enrichedJobs.map(j => ({
-      id: j.id,
-      roleKey: j.jobRole?.key,
-      packageTier: j.packageTier,
-      deadlineAt: j.deadlineAt,
-      publishedAt: j.publishedAt,
-      createdAt: j.createdAt,
-    }));
-    
-    const rankedJobs = rankJobs(rankableJobs, roleKeys, now);
-    sortedJobs = rankedJobs.map(r => enrichedJobs.find(j => j.id === r.id)!);
   } else if (sortMode === "LATEST") {
     sortedJobs.sort((a, b) => {
       const aTime = (a.publishedAt || a.createdAt).getTime();
