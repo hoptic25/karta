@@ -166,13 +166,22 @@ export async function getStudentDiscoveryJobs(
   };
 
   if (options?.roleKey && options.roleKey !== "ALL") {
-    // Find JobRole by key to get the ID
-    const jobRole = await prisma.jobRole.findUnique({
-      where: { key: options.roleKey },
+    // Cari role baik by key (UPPERCASE/lowercase) atau by id
+    const cleanRoleKey = options.roleKey.trim();
+    const jobRole = await prisma.jobRole.findFirst({
+      where: {
+        OR: [
+          { key: cleanRoleKey.toUpperCase() },
+          { key: cleanRoleKey },
+          { id: cleanRoleKey },
+        ],
+      },
       select: { id: true },
     });
     if (jobRole) {
       where.jobRoleId = jobRole.id;
+    } else {
+      where.jobRoleId = cleanRoleKey;
     }
   }
 
