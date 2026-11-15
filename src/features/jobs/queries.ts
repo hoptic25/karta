@@ -166,23 +166,14 @@ export async function getStudentDiscoveryJobs(
   };
 
   if (options?.roleKey && options.roleKey !== "ALL") {
-    // Cari role baik by key (UPPERCASE/lowercase) atau by id
     const cleanRoleKey = options.roleKey.trim();
-    const jobRole = await prisma.jobRole.findFirst({
-      where: {
-        OR: [
-          { key: cleanRoleKey.toUpperCase() },
-          { key: cleanRoleKey },
-          { id: cleanRoleKey },
-        ],
-      },
-      select: { id: true },
-    });
-    if (jobRole) {
-      where.jobRoleId = jobRole.id;
-    } else {
-      where.jobRoleId = cleanRoleKey;
-    }
+    // Prioritaskan filter via relasi jobRole agar match key case-insensitive atau ID langsung
+    where.OR = [
+      { jobRoleId: cleanRoleKey },
+      { jobRole: { key: { equals: cleanRoleKey.toUpperCase() } } },
+      { jobRole: { key: { equals: cleanRoleKey } } },
+      { jobRole: { label: { contains: cleanRoleKey, mode: "insensitive" } } },
+    ];
   }
 
   if (options?.type === "PAID") {
