@@ -11,6 +11,7 @@ import {
 interface StudentJobsPageProps {
   searchParams: Promise<{
     roleKey?: string | "ALL";
+    role?: string | "ALL";
     type?: "ALL" | "PAID" | "UNPAID";
     search?: string;
     sort?: "RECOMMENDED" | "LATEST" | "DEADLINE" | "REWARD";
@@ -37,7 +38,7 @@ export default async function StudentJobsPage({ searchParams }: StudentJobsPageP
   const page = params.page ? parseInt(params.page, 10) : 1;
 
   const discoveryData = await getStudentDiscoveryJobs(session.user.id, {
-    roleKey: params.roleKey,
+    roleKey: params.roleKey || params.role,
     type: params.type,
     search: params.search,
     sort: params.sort,

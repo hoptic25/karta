@@ -29,13 +29,13 @@ interface DiscoveryClientViewProps {
 
 const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "ALL", label: "Semua Keahlian" },
-  { value: "data_entry", label: "Data Entry" },
-  { value: "content_writer", label: "Penulisan Konten" },
-  { value: "graphic_designer", label: "Desain Grafis" },
-  { value: "social_media", label: "Media Sosial" },
-  { value: "video_editor", label: "Video Editor" },
-  { value: "uiux_designer", label: "UI/UX Designer" },
-  { value: "frontend_dev", label: "Frontend Dev" },
+  { value: "DATA_ENTRY", label: "Data Entry" },
+  { value: "CONTENT_WRITER", label: "Penulisan Konten" },
+  { value: "GRAPHIC_DESIGNER", label: "Desain Grafis" },
+  { value: "SOCIAL_MEDIA", label: "Media Sosial" },
+  { value: "VIDEO_EDITOR", label: "Video Editor" },
+  { value: "UIUX_DESIGNER", label: "UI/UX Designer" },
+  { value: "FRONTEND_DEV", label: "Frontend Dev" },
 ];
 
 export function DiscoveryClientView({
@@ -49,7 +49,7 @@ export function DiscoveryClientView({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const currentRole = (searchParams.get("role") as JobRole | "ALL") || "ALL";
+  const currentRole = searchParams.get("role") || searchParams.get("roleKey") || "ALL";
   const currentType = (searchParams.get("type") as "ALL" | "PAID" | "UNPAID") || "ALL";
   const currentSort = (searchParams.get("sort") as "RECOMMENDED" | "LATEST" | "DEADLINE" | "REWARD") || "RECOMMENDED";
   const currentSearch = searchParams.get("search") || "";
@@ -138,7 +138,7 @@ export function DiscoveryClientView({
           <div className="flex flex-wrap items-center gap-2">
             {/* ROLE SELECTOR */}
             <select
-              value={typeof currentRole === "string" ? currentRole : currentRole.id}
+              value={currentRole}
               onChange={(e) => updateFilters({ role: e.target.value })}
               className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans"
             >
