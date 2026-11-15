@@ -131,9 +131,10 @@ export function isJobClaimableByDeadline(
   },
   now: Date = new Date()
 ): boolean {
-  const tier = job.packageTier || "BASIC";
-  const roleKey = job.jobRole?.key || "DATA_ENTRY";
-  const cutoff = getClaimCutoffTime(job.deadlineAt, roleKey, tier);
-  return now.getTime() <= cutoff.getTime();
+  // Pekerjaan masih dapat diklaim selama belum melewati deadline pengerjaan itu sendiri
+  if (now.getTime() > job.deadlineAt.getTime()) {
+    return false;
+  }
+  return true;
 }
 
