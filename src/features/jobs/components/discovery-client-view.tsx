@@ -134,30 +134,19 @@ export function DiscoveryClientView({
         </form>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-beige/60 text-xs">
-          {/* FILTER ROLE & TIPE */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* ROLE SELECTOR */}
+          {/* FILTER ROLE / BIDANG KEAHLIAN */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-primary-brown/60">Bidang:</span>
             <select
               value={currentRole}
               onChange={(e) => updateFilters({ role: e.target.value })}
-              className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans"
+              className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans font-medium text-primary-brown"
             >
               {ROLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
-            </select>
-
-            {/* TIPE IMBALAN SELECTOR */}
-            <select
-              value={currentType}
-              onChange={(e) => updateFilters({ type: e.target.value })}
-              className="rounded-lg border border-input bg-transparent px-3 py-1.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-sans"
-            >
-              <option value="ALL">Semua Jenis Imbalan</option>
-              <option value="PAID">Berbayar (IDR)</option>
-              <option value="UNPAID">Volunteer / Pengalaman (Poin Penuh)</option>
             </select>
           </div>
 
